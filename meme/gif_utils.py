@@ -263,7 +263,7 @@ def save_rgba_gif(frames: list, durations: list, output_path: str,
             flags = disposal_bits | (0x01 if has_trans else 0x00)
             f.write(b"\x21\xF9\x04")
             t_idx = trans_idx if has_trans else 0
-            f.write(struct.pack("<BBHB", flags, dur_cs, t_idx, 0))
+            f.write(struct.pack("<BHBB", flags, dur_cs, t_idx, 0))
 
             # Image Descriptor — 无局部调色板
             f.write(b"\x2C")
