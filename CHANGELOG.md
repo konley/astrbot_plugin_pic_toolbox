@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [v1.1.2] — 2026-06-16
+
+### 🐛 修复
+
+- **GIF 调速后颜色偏移**：`save_rgba_gif()` 对所有操作重新量化生成新调色板，导致 GIF 主体颜色偏移。修复为：调速/翻转/对称等不改变像素颜色的操作直接复用原 GIF 调色板；仅反色等变色操作回退到重量化。
+- **GIF 动画静止**：修正 GCE (Graphic Control Extension) 二进制写入的 struct 格式（`<BBHB` → `<BHBB>`）。原格式将 delay（2 字节）与 transparent index（1 字节）的字节数写反，导致 `trans_idx=255` 时每帧延迟 ~653 秒 → GIF 看似静止。
+
+### 🔧 影响范围
+
+`save_rgba_gif()` 新增 `source_palette` / `source_trans_idx` 可选参数，所有调用方（`gif_speed` / `flip` / `mirror`）在 `unfold_frames` 前捕获原调色板后传入。
+
+---
+
 ## [v1.1.1] — 2026-06-16
 
 ### 🐛 修复
