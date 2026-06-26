@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## [v1.3.0] — 2026-06-27
+
+### 🔄 Fork 维护说明
+
+本插件由 [konley](https://github.com/konley) 从 [Lucy](https://github.com/lirundong093-glitch) 的原始仓库 fork 并持续维护。此版本起 `repo` 已指向 `github.com/konley/astrbot_plugin_pic_toolbox`。
+
+### ✨ 新增
+
+- **马赛克处理**：新增 `马赛克` 指令，支持默认块大小（8）和 1~10 级程度调节，块越大越糊。
+- **GIF 加速**：新增 `加速` 指令，支持默认倍率（2×）和自定义 0.3~5.0 倍率，可配置 `default_speedup_factor`。
+- **GIF 倒放**：新增 `倒放` 指令，反转 GIF 帧顺序播放。
+- **发射二次元人脸检测**：引入 LBP 动漫人脸级联分类器（`lbpcascade_animeface.xml`，来自 nagadomi/lbpcascade_animeface），专为日系动画头像优化，配合直方图均衡化提升线稿对比度。三级检测策略（LBP 动漫 → Haar 正面 → Haar 侧脸）自动择优。
+
+### 🔧 变更
+
+- **指令重命名**：`操你` → `撅`，`抽你` → `抽`，更简短直观。
+- **`加速` 指令**是 `调速` 的别名，支持相同倍率范围，默认 `default_speedup_factor` 可配置。
+- **`发射` 人脸检测完全重写**：`_detect_face_focal()` 新增 LBP 动漫级联 + 多组参数遍历，大幅提升检测准确率。
+
+### 📦 依赖
+
+- 新增 `numpy>=1.24.0`、`opencv-python-headless>=4.8.0`（由 `meme/shoot.py` 引入）
+
+### 📝 文档
+
+- README 新增马赛克、加速、倒放指令说明及「滤镜/动效类」表格。
+- README 补充配置项 `default_speedup_factor`、`default_pixelate_block`。
+- 项目结构更新，新增 `meme/pixelate.py`、`meme/reverse.py` 模块。
+
+---
+
 ## [v1.1.3] — 2026-06-22
 
 ### ✨ 新增
