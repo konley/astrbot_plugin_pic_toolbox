@@ -15,7 +15,7 @@ from astrbot.api.star import Context, Star
 from pathlib import Path
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
-from .meme import gif_speed, invert, flip, petpet, mirror, shoot, do, lash, behead
+from .meme import gif_speed, invert, flip, petpet, mirror, shoot, do, lash, behead, pixelate, reverse
 
 QQ_AVATAR_URL = "http://q1.qlogo.cn/g?b=qq&nk={qq}&s=640"
 TMP_DIR = Path(get_astrbot_data_path()) / "plugin_data" / "pic_toolbox"
@@ -53,6 +53,8 @@ class PicToolboxPlugin(Star):
         self._enable_at_avatar = config.get("enable_at_avatar", True)
         self._match_mode = config.get("match_mode", False)
         self._gif_speed_allow_frame_drop = config.get("gif_speed_allow_frame_drop", False)
+        self._default_speedup_factor = config.get("default_speedup_factor", 2.0)
+        self._default_pixelate_block = config.get("default_pixelate_block", 8)
         # 启动时清理旧临时文件（进程崩溃残留）
         self._cleanup_stale_tempfiles()
 
@@ -228,8 +230,8 @@ class PicToolboxPlugin(Star):
                 yield r
             return
 
-        # ── 操你（双头像）─────────────────────
-        if cmd_text == "操你":
+        # ── 撅（双头像，原"操你"）────────────────
+        if cmd_text == "撅":
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             if not at_qq:
@@ -240,8 +242,8 @@ class PicToolboxPlugin(Star):
                 yield r
             return
 
-        # ── 抽你（双头像）─────────────────────
-        if cmd_text == "抽你":
+        # ── 抽（双头像，原"抽你"）────────────────
+        if cmd_text == "抽":
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             if not at_qq:
@@ -261,6 +263,85 @@ class PicToolboxPlugin(Star):
             event.stop_event()
             image_url = QQ_AVATAR_URL.format(qq=at_qq)
             async for r in self._download_and_process(event, image_url, behead.generate_behead, "杀"):
+                yield r
+            return
+
+        # ── 马赛克（可带程度参数）────────────────
+        if cmd_text == "马赛克" or cmd_text.startswith("马赛克 "):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+
+            # 解析程度参数
+            parts = cmd_text.split(None, 1)
+            block_size = self._default_pixelate_block
+            if len(parts) > 1:
+                try:
+                    level = int(parts[1].strip())
+                    # 程度 1~10 级映射到 block_size 2~50
+                    block_size = max(2, min(50, 2 + (level - 1) * 5))
+                except ValueError:
+                    yield event.plain_result("马赛克程度请用数字，如「马赛克 5」")
+                    return
+
+            event.stop_event()
+            def _pix_proc(inp, out, _bs=block_size):
+                return pixelate.pixelate_image(inp, out, block_size=_bs)
+            async for r in self._download_and_process(event, image_url, _pix_proc, "马赛克"):
+                yield r
+            return
+
+        # ── 加速（默认 2 倍，可带倍数参数）──────
+        if cmd_text == "加速" or cmd_text.startswith("加速 "):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+
+            parts = cmd_text.split(None, 1)
+            speed = self._default_speedup_factor
+            if len(parts) > 1:
+                try:
+                    speed = gif_speed.parse_speed(parts[1].strip())
+                except ValueError as e:
+                    yield event.plain_result(str(e))
+                    return
+
+            event.stop_event()
+            speed_result = {"warning": None}
+            allow_drop = self._gif_speed_allow_frame_drop
+            def _speedup_proc(inp, out, _sp=speed):
+                _, _, warning = gif_speed.adjust_gif_speed(
+                    inp, out, _sp, allow_frame_drop=allow_drop
+                )
+                speed_result["warning"] = warning
+            async for r in self._download_and_process(
+                event, image_url, _speedup_proc, "加速",
+                get_prefix=lambda: speed_result["warning"],
+            ):
+                yield r
+            return
+
+        # ── 倒放（反转 GIF 帧顺序）──────────────
+        if cmd_text == "倒放":
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            async for r in self._download_and_process(event, image_url, reverse.reverse_gif, "倒放"):
                 yield r
             return
 
