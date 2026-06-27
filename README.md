@@ -1,63 +1,80 @@
 # 🖼️ 图片处理工具箱 (astrbot_plugin_pic_toolbox)
 
-基于 AstrBot 框架的群聊图片 / 头像处理插件，支持静态图和 GIF 的反色、翻转、镜像对称、调速，以及摸头杀、发射、撅人、鞭笞、砍头等一系列趣味表情包生成。所有 GIF 处理统一使用增量帧展开管道，保留原图时长、透明度与循环信息。
+基于 AstrBot 框架的群聊图片 / 头像处理插件。支持静态图和 GIF 的**反色、翻转、对称、旋转、故障、万花筒、抖动、呼吸、包浆、波普、电子包浆、哈哈镜、裸眼3D、马赛克、调速、倒放、往返**以及**摸头杀、发射、撅人、抽、砍头**等一系列趣味表情包生成。所有 GIF 处理统一使用增量帧展开管道，保留原图时长、透明度与循环信息。
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.0.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/Python-3.8%2B-blue" alt="Python">
   <img src="https://img.shields.io/badge/AstrBot-%E6%8F%92%E4%BB%B6%E6%A1%86%E6%9E%B6-brightgreen" alt="AstrBot">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  <img src="https://img.shields.io/badge/fork-konley-blueviolet" alt="Fork">
 </p>
 
 ---
 
 ## ✨ 功能一览
 
-### 🔧 变换类
+### 🎨 基础变换
 
 | 指令 | 说明 | 图片来源 |
 | :--- | :--- | :--- |
-| `反色` | 对图片 / GIF 执行反色处理 | 引用回复图片 / 直接发送图片 / `@用户`取头像 |
+| `反色` | 对图片 / GIF 执行反色处理 | 引用回复 / 直接发送 / `@用户` |
+| `旋转 [角度步长]` | 圆形旋转 GIF，默认 6°/帧 | 同上 |
 | `左右翻转` | 水平镜像翻转 | 同上 |
 | `上下翻转` | 垂直颠倒翻转 | 同上 |
-| `调速 0.3~5.0` | 调整 GIF 播放速度（如 `调速 2.0` 即两倍速）。GIF 上限 50 FPS，超限时自动回退到最接近上限的倍率并提示用户；开启 `gif_speed_allow_frame_drop` 后则通过均匀丢帧实现目标倍率 | 引用回复图片 / 直接发送图片 |
 
-### 🔄 对称类
+### 🪞 对称
 
 | 指令 | 说明 | 图片来源 |
 | :--- | :--- | :--- |
-| `左对称` | 保留左半边 → 镜像到右边 | 引用 / 直接 / `@用户` |
-| `右对称` | 保留右半边 → 镜像到左边 | 同上 |
-| `上对称` | 保留上半边 → 镜像到下边 | 同上 |
-| `下对称` | 保留下半边 → 镜像到上边 | 同上 |
+| `对称` / `对称1` | 保留左半边 → 镜像到右（默认） | 引用 / 直接 / `@用户` |
+| `对称2` | 保留上半边 → 镜像到下 | 同上 |
+| `对称3` | \\ 对角线对称（保留左上三角） | 同上 |
+| `对称4` | / 对角线对称（保留右上三角） | 同上 |
+| `左对称` / `右对称` / `上对称` / `下对称` | 传统四向对称（兼容保留） | 同上 |
+| `真对称[1-4]` | 延展型对称，画布扩大 | 同上 |
 
-### 🎭 表情包 / 特效类
+> `真对称1` = 向右延展（原图左，翻转拼右，宽度翻倍），`2`=向左，`3`=向上，`4`=向下
+
+### 🖼️ 视觉特效
+
+| 指令 | 说明 | 图片来源 |
+| :--- | :--- | :--- |
+| `故障 [强度]` | RGB 通道分离偏移，赛博故障风 GIF | 引用 / 直接 / `@用户` |
+| `万花筒 [扇区]` | 扇区镜像对称旋转 GIF | 同上 |
+| `抖动 [颜色数]` | 降色阶 + Floyd-Steinberg 抖动，复古 8-bit | 同上 |
+| `呼吸 [帧延迟]` | 周期缩放呼吸动画 GIF | 同上 |
+| `包浆 [强度]` | Sepia 染色 + 暗角 + 噪点 + 褪色，老照片感 | 同上 |
+| `波普 [格数]` | Pop Art 波普艺术（默认 4 联画不同配色） | 同上 |
+| `电子包浆 [程度]` | JPEG 伪影 + 色彩断层 + 像素化，互联网蹂躏感 | 同上 |
+| `哈哈镜 [类型] [强度]` | 6 种扭曲（凸/凹/横柱/竖柱/波浪/螺旋） | 同上 |
+| `裸眼3d [强度]` | 帧差法前景提取，裸眼3D 效果 GIF | 同上 |
+| `马赛克 [程度]` | 马赛克处理，默认块大小 8 | 同上 |
+
+### 🎭 表情包 / 动效
 
 | 指令 | 说明 | 类型 | 图片来源 |
 | :--- | :--- | :--- | :--- |
-| `摸头` | 生成 Petpet 摸头杀 GIF | 单人头 | 引用 / 直接 / `@用户` |
-| `发射` | 生成射击表情包（含人脸检测自动定位） | 单人头 | 引用 / 直接 / `@用户` |
-| `杀` | 生成砍头表情包 GIF | 单人头 | 必须 `@用户` |
-| `撅` | 生成撅人表情包（双人互动） | 双人头 | 必须 `@用户` |
-| `抽` | 生成鞭笞表情包（双人互动） | 双人头 | 必须 `@用户` |
+| `摸头` | Petpet 摸头杀 GIF | 单人头 | 引用 / 直接 / `@用户` |
+| `发射` | 射击表情包（含人脸检测定位） | 单人头 | 引用 / 直接 / `@用户` |
+| `杀` | 砍头表情包 GIF | 单人头 | 必须 `@用户` |
+| `撅` | 撅人表情包（双人互动） | 双人头 | 必须 `@用户` |
+| `抽` | 鞭笞表情包（双人互动） | 双人头 | 必须 `@用户` |
 
-> **双人头指令说明**：`撅` 和 `抽` 需要同时获取指令发送者与被 @ 者的头像，因此 **必须 @一个目标用户**，否则会提示「请 @ 一个目标！」。
-
-### 🎨 滤镜 / 动效类
+### 🔄 GIF 动效
 
 | 指令 | 说明 | 图片来源 |
 | :--- | :--- | :--- |
-| `马赛克` | 马赛克马赛克处理，默认块大小 8 | 引用 / 直接 / `@用户` |
-| `马赛克 程度` | 按程度马赛克（1~10 级，级数越大越糊） | 同上 |
-| `加速` | GIF 加速，默认 2 倍速 | 引用 / 直接 |
-| `加速 倍数` | 指定倍率加速（0.3~5.0） | 引用 / 直接 |
-| `倒放` | 反转 GIF 帧顺序倒放播放 | 引用 / 直接 / `@用户` |
+| `加速 [倍率]` | GIF 加速，默认 2 倍速，范围 0.3~5.0 | 引用 / 直接 |
+| `调速 <倍率>` | 精准 GIF 调速（必带参数） | 引用 / 直接 |
+| `倒放` | 反转 GIF 帧顺序 | 引用 / 直接 / `@用户` |
+| `往返` | GIF 正序+倒序 ping-pong 循环 | 同上 |
 
 ### 通用特性
 
-- **图片来源**：按优先级依次尝试 ①引用回复中的图片 ②直接发送的图片 ③ `@用户` 的 QQ 头像（需开启 `enable_at_avatar`）
-- **GIF 支持**：所有变换类指令均正确处理 GIF 增量帧，保留时长、透明度与循环信息
+- **图片来源优先级**：①引用回复图片 ②直接发送图片 ③ `@用户` 的 QQ 头像（需开启 `enable_at_avatar`）
+- **GIF 全支持**：所有变换和特效指令均正确处理 GIF 增量帧，保留时长、透明度与循环信息
+- **紧凑语法**：`对称1` `哈哈镜1 0.5` `旋转12` 等支持不带空格触发
+- **带参触发**：多数指令支持参数覆盖配置默认值
 - **精准匹配**：`match_mode` 开启后可直接发送词语触发，无需 `/` 前缀
 - **自动清理**：启动时清理超过 1 小时的残留临时文件，处理后 10 秒自动删除输出文件
 
@@ -68,10 +85,20 @@
 | 配置 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `enable_at_avatar` | bool | `true` | 允许 `@用户 + 指令` 获取对方头像处理 |
-| `match_mode` | bool | `false` | 开启后直接发「反色」即可触发，无需 `/` 前缀 |
-| `gif_speed_allow_frame_drop` | bool | `false` | 调速超 50 FPS 时允许均匀丢帧实现目标倍率（默认关闭，自动回退） |
-| `default_speedup_factor` | float | `2.0` | 「加速」指令不带参数时的默认倍率（0.3~5.0） |
-| `default_pixelate_block` | int | `8` | 「马赛克」指令不带参数时的默认马赛克块大小（2~50） |
+| `match_mode` | bool | `false` | 开启后直接发文字即可触发，无需 `/` 前缀 |
+| `gif_speed_allow_frame_drop` | bool | `false` | 调速超 50 FPS 时允许均匀丢帧 |
+| `default_speedup_factor` | float | `2.0` | 「加速」默认倍率 |
+| `default_pixelate_block` | int | `8` | 「马赛克」默认块大小 |
+| `spin_direction` / `spin_angle_step` | str/int | `clockwise` / `6` | 旋转方向与每帧角度 |
+| `glitch_max_shift` / `glitch_num_frames` / `glitch_frame_delay` | int | `15` / `8` / `80` | 故障偏移/帧数/延迟 |
+| `kal_sectors` / `kal_zoom` / `kal_angle_step` / `kal_frame_delay` | int/float/int/int | `8` / `0.5` / `3` / `40` | 万花筒参数 |
+| `dither_num_colors` | int | `16` | 抖动颜色数 |
+| `breath_min_scale` / `breath_max_scale` / `breath_frames` / `breath_frame_delay` | float/float/int/int | `0.92` / `1.08` / `30` / `40` | 呼吸缩放参数 |
+| `patina_sepia_strength` / `patina_vignette_strength` / `patina_noise_amount` / `patina_fade_amount` | int | `60` / `40` / `20` / `30` | 包浆参数 |
+| `popart_num_colors` / `popart_edge_width` / `popart_halftone_size` / `popart_panels` | int | `6` / `3` / `0` / `4` | 波普艺术参数 |
+| `digital_patina_jpeg_quality` / `digital_patina_banding_level` / `digital_patina_pixelate_size` | int | `15` / `5` / `0` | 电子包浆参数 |
+| `funhouse_mirror_type` / `funhouse_mirror_strength` | str/float | `bulge` / `1.0` | 哈哈镜类型与强度 |
+| `be3d_line_spacing` / `be3d_line_width` / `be3d_line_alpha` / `be3d_line_direction` / `be3d_mask_threshold` / `be3d_mask_blur` / `be3d_foreground_blur` / `be3d_max_frames` | int/int/int/str/int/int/int/int | `80` / `3` / `200` / `both` / `25` / `7` / `0` / `48` | 裸眼3D 参数 |
 
 ---
 
@@ -81,86 +108,47 @@
 
 ### 默认策略：自动取最接近上限倍率（推荐）
 
-当请求倍率导致帧率超过 50 FPS 时，插件会自动计算一个 **不超过 50 FPS 的最高合法倍率**（保留一位小数），并回退到该倍率执行。
-
-> 例如：原 GIF 为 30 FPS，请求 ×2.0 → 目标 60 FPS 超出上限，自动回退至 ×1.6 → 约 48 FPS，并提示用户实际使用的倍率。
+当请求倍率导致帧率超过 50 FPS 时，插件自动计算不超过 50 FPS 的最高合法倍率并回退。
 
 ### 丢帧模式：`gif_speed_allow_frame_drop`
 
-开启此配置后，调速不再回退倍率，而是通过 **均匀丢帧** 保证每帧间隔不低于 20ms，从而在遵守 50 FPS 上限的同时实现目标倍率。
-
-> 例如：30 帧 GIF，请求 ×5.0，插件计算需要保留的帧数后每隔若干帧取一帧，确保最终帧率在 50 FPS 以内并提示丢帧信息。
-
-| 策略 | 效果 | 流畅度 | 适用场景 |
-| :--- | :--- | :--- | :--- |
-| 自动回退（默认） | 保留全部帧，倍率自动下调 | 流畅 | 日常调速 |
-| 允许丢帧 | 达到目标倍率，帧数减少 | 有跳帧感 | 追求极致加速 |
+开启后调速不再回退倍率，通过均匀丢帧保证每帧间隔不低于 20ms。
 
 ---
 
 ## 📦 安装与依赖
 
-### 1. 安装插件
+### 安装
 
-将本插件目录放入 AstrBot 的插件目录，或通过 AstrBot 管理面板上传安装。
+将插件目录放入 AstrBot `addons/plugins/` 目录，或通过 AstrBot 管理面板上传安装。
 
-```bash
-# 方式一：软链接
-ln -s /path/to/astrbot_plugin_pic_toolbox /path/to/astrbot/addons/plugins/
-
-# 方式二：直接放入
-cp -r astrbot_plugin_pic_toolbox /path/to/astrbot/addons/plugins/
-```
-
-### 2. 安装依赖
+### 依赖
 
 ```bash
 pip install Pillow>=10.0.0 requests>=2.25.0
+pip install opencv-python-headless  # 发射指令需要
 ```
 
-**可选依赖**（`发射` 指令需要人脸检测功能）：
-
-```bash
-# 二选一
-pip install opencv-python      # GUI 完整版
-pip install opencv-python-headless  # 无头版（推荐服务器使用）
-
-# opencv-python 会自动安装 numpy，无需单独安装
-```
-
-> 如果不安装 opencv-python，`发射` 指令将不可用，其他功能不受影响。
+> `opencv-python-headless` 仅 `发射`（人脸检测）需要，同时也会安装 numpy。
 
 ---
 
 ## 🖼️ 使用示例
-
-### 基础变换
 
 ```
 用户：（发送一张图片）
 用户：反色
 Bot：  [返回反色后的图片]
 
-用户：（引用一条含 GIF 的消息）
-用户：/调速 2.0
-Bot：  [返回 2 倍速的 GIF]
-```
+用户：（引用一张 GIF）
+用户：故障 30
+Bot：  [返回 RGB 偏移故障风 GIF]
 
-### @用户取头像
+用户：@某人 对称
+Bot：  [取对方头像 → 左对称拼接]
 
-```
-用户：@某人 左对称
-Bot：  [获取该用户头像 → 左对称处理后返回]
-```
-
-### 双人头表情包
-
-```
 用户：@某人 撅
 Bot：  [取发送者 + 被 @ 者头像 → 生成撅人 GIF]
-
-用户：@某人 抽
-Bot：  [取发送者 + 被 @ 者头像 → 生成鞭笞 GIF]
 ```
 
 ---
@@ -171,42 +159,41 @@ Bot：  [取发送者 + 被 @ 者头像 → 生成鞭笞 GIF]
 astrbot_plugin_pic_toolbox/
 ├── main.py              # 插件主体：指令路由与事件处理
 ├── metadata.yaml        # 插件元数据
-├── _conf_schema.json    # 配置 Schema
+├── _conf_schema.json    # 配置 Schema（22+ 配置项）
 ├── requirements.txt     # Python 依赖
 ├── logo.png             # 插件图标
 ├── meme/                # 图像处理模块
-│   ├── __init__.py
 │   ├── gif_utils.py     # GIF 帧展开与保存公用函数
-│   ├── invert.py        # 反色处理
+│   ├── invert.py        # 反色
 │   ├── flip.py          # 水平 / 垂直翻转
-│   ├── mirror.py        # 左 / 右 / 上 / 下对称
+│   ├── mirror.py        # 对称（含斜边/延展/统一入口）
+│   ├── spin.py          # 旋转动画 GIF
+│   ├── glitch.py        # RGB 故障风
+│   ├── kaleidoscope.py  # 万花筒
+│   ├── dither.py        # 抖动 / 降色
+│   ├── breathing.py     # 呼吸缩放
+│   ├── patina.py        # 包浆做旧
+│   ├── popart.py        # 波普艺术
+│   ├── digital_patina.py # 电子包浆
+│   ├── funhouse_mirror.py # 哈哈镜扭曲
+│   ├── bare_eye_3d.py   # 裸眼3D
 │   ├── gif_speed.py     # GIF 调速
-│   ├── petpet.py        # 摸头杀生成器
-│   ├── shoot.py         # 射击表情包（含人脸检测）
-│   ├── do.py            # 撅人表情包（双人头）
-│   ├── lash.py          # 鞭笞表情包（双人头）
-│   ├── behead.py        # 砍头表情包（单人头）
-│   ├── pixelate.py      # 马赛克处理
-│   └── reverse.py       # GIF 倒放
+│   ├── pixelate.py      # 马赛克
+│   ├── reverse.py       # GIF 倒放
+│   ├── roundtrip.py     # GIF 往返
+│   ├── petpet.py        # 摸头杀
+│   ├── shoot.py         # 射击（含人脸检测）
+│   ├── do.py            # 撅人（双人头）
+│   ├── lash.py          # 鞭笞（双人头）
+│   └── behead.py        # 砍头
 └── resource/            # 资源素材
-    ├── petpet_hand.png  # 摸头杀手部精灵图
-    ├── lbpcascade_animeface.xml  # 二次元人脸级联分类器
-    ├── do_frames/       # 撅人底图帧（3 帧）
-    ├── shoot_frames/    # 射击底图帧（13 帧）
-    ├── lash_frames/     # 鞭笞底图帧（9 帧）
-    └── behead_frames/   # 砍头底图帧（21 帧）
+    ├── petpet_hand.png
+    ├── lbpcascade_animeface.xml
+    ├── do_frames/
+    ├── shoot_frames/
+    ├── lash_frames/
+    └── behead_frames/
 ```
-
----
-
-## 🔄 GIF 处理说明
-
-插件使用统一的 `unfold_frames()` 将 GIF 增量帧逐帧复合为完整帧后再处理，避免非首帧局部区域导致的黑块问题。保存时自动继承原 GIF 的：
-
-- `duration`（每帧时长）
-- `disposal`（帧处置方式）
-- `loop`（循环次数）
-- `transparency`（透明索引）
 
 ---
 
@@ -218,12 +205,11 @@ astrbot_plugin_pic_toolbox/
 
 ## 🙏 鸣谢
 
-- [B1gM8c/Petpet](https://github.com/B1gM8c/Petpet) — 摸头杀原始算法
-- [meme-generator](https://github.com/MeetWq/meme-generator) — 发射 / 撅人 / 鞭笞 / 砍头表情包灵感来源
 - [AstrBot](https://github.com/AstrBotDevs/AstrBot) — 机器人框架
-- [Pillow (PIL)](https://python-pillow.org/) — 图像处理核心库
-- [OpenCV](https://opencv.org/) — 人脸检测（`发射` 指令）
+- [Pillow](https://python-pillow.org/) — 图像处理核心库
+- [OpenCV](https://opencv.org/) — 人脸检测
+- [nagadomi/lbpcascade_animeface](https://github.com/nagadomi/lbpcascade_animeface) — 动漫人脸级联分类器
+- [B1gM8c/Petpet](https://github.com/B1gM8c/Petpet) — 摸头杀原始算法
+- [meme-generator](https://github.com/MeetWq/meme-generator) — 表情包灵感来源
 
----
-
-<p align="center">Forked from <a href="https://github.com/lirundong093-glitch">Lucy</a> · Maintained by <a href="https://github.com/konley">konley</a></p>
+<p align="center">Maintained by <a href="https://github.com/konley">konley</a></p>

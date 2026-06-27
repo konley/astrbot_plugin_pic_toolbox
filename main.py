@@ -15,7 +15,7 @@ from astrbot.api.star import Context, Star
 from pathlib import Path
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
-from .meme import gif_speed, invert, flip, petpet, mirror, shoot, do, lash, behead, pixelate, reverse
+from .meme import gif_speed, invert, flip, petpet, mirror, shoot, do, lash, behead, pixelate, reverse, roundtrip, bare_eye_3d, spin, glitch, kaleidoscope, dither, breathing, patina, popart, digital_patina, funhouse_mirror
 
 QQ_AVATAR_URL = "http://q1.qlogo.cn/g?b=qq&nk={qq}&s=640"
 TMP_DIR = Path(get_astrbot_data_path()) / "plugin_data" / "pic_toolbox"
@@ -55,6 +55,51 @@ class PicToolboxPlugin(Star):
         self._gif_speed_allow_frame_drop = config.get("gif_speed_allow_frame_drop", False)
         self._default_speedup_factor = config.get("default_speedup_factor", 2.0)
         self._default_pixelate_block = config.get("default_pixelate_block", 8)
+        # 裸眼3D 参数
+        self._be3d_line_spacing = config.get("be3d_line_spacing", 80)
+        self._be3d_line_width = config.get("be3d_line_width", 3)
+        self._be3d_line_alpha = config.get("be3d_line_alpha", 200)
+        self._be3d_line_direction = config.get("be3d_line_direction", "both")
+        self._be3d_mask_threshold = config.get("be3d_mask_threshold", 25)
+        self._be3d_mask_blur = config.get("be3d_mask_blur", 7)
+        self._be3d_foreground_blur = config.get("be3d_foreground_blur", 0)
+        self._be3d_max_frames = config.get("be3d_max_frames", 48)
+        # 旋转参数
+        self._spin_direction = config.get("spin_direction", "clockwise")
+        self._spin_angle_step = config.get("spin_angle_step", 6)
+        # 故障参数
+        self._glitch_max_shift = config.get("glitch_max_shift", 15)
+        self._glitch_num_frames = config.get("glitch_num_frames", 8)
+        self._glitch_frame_delay = config.get("glitch_frame_delay", 80)
+        # 万花筒参数
+        self._kal_sectors = config.get("kal_sectors", 8)
+        self._kal_zoom = config.get("kal_zoom", 0.5)
+        self._kal_angle_step = config.get("kal_angle_step", 3)
+        self._kal_frame_delay = config.get("kal_frame_delay", 40)
+        # 抖动参数
+        self._dither_num_colors = config.get("dither_num_colors", 16)
+        # 呼吸参数
+        self._breath_min_scale = config.get("breath_min_scale", 0.92)
+        self._breath_max_scale = config.get("breath_max_scale", 1.08)
+        self._breath_frames = config.get("breath_frames", 30)
+        self._breath_frame_delay = config.get("breath_frame_delay", 40)
+        # 包浆参数
+        self._patina_sepia = config.get("patina_sepia_strength", 60)
+        self._patina_vignette = config.get("patina_vignette_strength", 40)
+        self._patina_noise = config.get("patina_noise_amount", 20)
+        self._patina_fade = config.get("patina_fade_amount", 30)
+        # 波普参数
+        self._pop_colors = config.get("popart_num_colors", 6)
+        self._pop_edge = config.get("popart_edge_width", 3)
+        self._pop_halftone = config.get("popart_halftone_size", 0)
+        self._pop_panels = config.get("popart_panels", 4)
+        # 电子包浆参数
+        self._dp_jpeg = config.get("digital_patina_jpeg_quality", 15)
+        self._dp_banding = config.get("digital_patina_banding_level", 5)
+        self._dp_pixelate = config.get("digital_patina_pixelate_size", 0)
+        # 哈哈镜参数
+        self._fm_type = config.get("funhouse_mirror_type", "bulge")
+        self._fm_strength = config.get("funhouse_mirror_strength", 1.0)
         # 启动时清理旧临时文件（进程崩溃残留）
         self._cleanup_stale_tempfiles()
 
@@ -79,21 +124,274 @@ class PicToolboxPlugin(Star):
         # 去掉可能的前导 /
         cmd_text = actual_cmd.lstrip("/").strip()
 
+        # ── 帮助 ────────────────────────────
+        if cmd_text in ("帮助", "图帮助", "图help", "img_help"):
+            event.stop_event()
+            yield event.plain_result(
+                "🖼️ 图片处理工具箱\n"
+                "────────────────\n"
+                "发送或引用一张图片，附带以下指令：\n\n"
+                "🎨 基础：反色 | 旋转 [角度步长] | 左右翻转 | 上下翻转\n"
+                "🪞 对称：对称[1-4]（1=左 2=上 3=\\ 4=/）| 真对称[1-4] | 左对称 | 右对称 | 上对称 | 下对称\n"
+                "🖼️ 特效：故障 [强度] | 万花筒 [扇区] | 抖动 [颜色数] | 呼吸 [帧延迟] | 包浆 [强度] | 电子包浆 [程度] | 哈哈镜 [类型] | 波普 [格数] | 马赛克 [程度] | 裸眼3d [强度]\n"
+                "🔄 GIF：加速 [倍率] | 调速 <倍率> | 倒放 | 往返\n"
+                "🎭 表情：摸头 | 发射 | 撅 @人 | 抽 @人 | 杀 @人\n"
+                "ℹ️ /帮助 /图帮助 /图help 显示本信息"
+            )
+            return
+
+        # ── 旋转（转圈 GIF）─────────────────
+        if cmd_text == "旋转" or (cmd_text.startswith("旋转 ") and cmd_text.split(None, 1)[1].isdigit()):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            spin_kwargs = dict(
+                direction=self._spin_direction,
+                angle_step=self._spin_angle_step,
+            )
+            parts = cmd_text.split(None, 1)
+            if len(parts) > 1:
+                spin_kwargs["angle_step"] = int(parts[1])
+            def _spin_proc(inp, out):
+                spin.spin_image(inp, out, **spin_kwargs)
+            async for r in self._download_and_process(event, image_url, _spin_proc, "旋转"):
+                yield r
+            return
+
+        # ── 故障（RGB 通道偏移 GIF）──────────
+        if cmd_text == "故障" or (cmd_text.startswith("故障 ") and cmd_text.split(None, 1)[1].isdigit()):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            gk = dict(max_shift=self._glitch_max_shift,
+                      num_frames=self._glitch_num_frames,
+                      frame_delay=self._glitch_frame_delay)
+            parts = cmd_text.split(None, 1)
+            if len(parts) > 1:
+                gk["max_shift"] = int(parts[1])
+            def _gproc(inp, out): glitch.glitch_image(inp, out, **gk)
+            async for r in self._download_and_process(event, image_url, _gproc, "故障"):
+                yield r
+            return
+
+        # ── 万花筒 ─────────────────────────
+        if cmd_text == "万花筒" or (cmd_text.startswith("万花筒 ") and cmd_text.split(None, 1)[1].isdigit()):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            kk = dict(sectors=self._kal_sectors, zoom=self._kal_zoom,
+                      angle_step=self._kal_angle_step,
+                      frame_delay=self._kal_frame_delay)
+            parts = cmd_text.split(None, 1)
+            if len(parts) > 1:
+                kk["sectors"] = int(parts[1])
+            def _kproc(inp, out): kaleidoscope.kaleidoscope_image(inp, out, **kk)
+            async for r in self._download_and_process(event, image_url, _kproc, "万花筒"):
+                yield r
+            return
+
+        # ── 抖动（降色阶 8-bit 风）──────────
+        if cmd_text == "抖动" or (cmd_text.startswith("抖动 ") and cmd_text.split(None, 1)[1].isdigit()):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            nc = self._dither_num_colors
+            parts = cmd_text.split(None, 1)
+            if len(parts) > 1:
+                nc = int(parts[1])
+            def _dproc(inp, out): dither.dither_image(inp, out, num_colors=nc)
+            async for r in self._download_and_process(event, image_url, _dproc, "抖动"):
+                yield r
+            return
+
+        # ── 呼吸（周期缩放 GIF）─────────────
+        if cmd_text == "呼吸" or (cmd_text.startswith("呼吸 ") and cmd_text.split(None, 1)[1].isdigit()):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            bk = dict(min_scale=self._breath_min_scale,
+                      max_scale=self._breath_max_scale,
+                      frames=self._breath_frames,
+                      frame_delay=self._breath_frame_delay)
+            parts = cmd_text.split(None, 1)
+            if len(parts) > 1:
+                bk["frame_delay"] = int(parts[1])
+            def _bproc(inp, out): breathing.breathing_image(inp, out, **bk)
+            async for r in self._download_and_process(event, image_url, _bproc, "呼吸"):
+                yield r
+            return
+
+        # ── 包浆（复古做旧）──────────────────
+        if cmd_text == "包浆" or (cmd_text.startswith("包浆 ") and cmd_text.split(None, 1)[1].isdigit()):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            pk = dict(sepia_strength=self._patina_sepia,
+                      vignette_strength=self._patina_vignette,
+                      noise_amount=self._patina_noise,
+                      fade_amount=self._patina_fade)
+            parts = cmd_text.split(None, 1)
+            if len(parts) > 1:
+                s = float(parts[1]) / 100.0
+                pk["sepia_strength"] = int(pk["sepia_strength"] * s)
+                pk["vignette_strength"] = int(pk["vignette_strength"] * s)
+                pk["noise_amount"] = int(pk["noise_amount"] * s)
+                pk["fade_amount"] = int(pk["fade_amount"] * s)
+            def _pproc(inp, out): patina.patina_image(inp, out, **pk)
+            async for r in self._download_and_process(event, image_url, _pproc, "包浆"):
+                yield r
+            return
+
+        # ── 波普（Pop Art）───────────────────
+        if cmd_text == "波普" or (cmd_text.startswith("波普 ") and cmd_text.split(None, 1)[1].isdigit()):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            pok = dict(num_colors=self._pop_colors, edge_width=self._pop_edge,
+                       halftone_size=self._pop_halftone, panels=self._pop_panels)
+            parts = cmd_text.split(None, 1)
+            if len(parts) > 1:
+                pok["panels"] = int(parts[1])
+            def _poproc(inp, out): popart.popart_image(inp, out, **pok)
+            async for r in self._download_and_process(event, image_url, _poproc, "波普"):
+                yield r
+            return
+
+        # ── 电子包浆 ───────────────────────
+        if cmd_text == "电子包浆" or (cmd_text.startswith("电子包浆 ") and cmd_text.split(None, 1)[1].isdigit()):
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            dk = dict(jpeg_quality=self._dp_jpeg,
+                      banding_level=self._dp_banding,
+                      pixelate_size=self._dp_pixelate)
+            parts = cmd_text.split(None, 1)
+            if len(parts) > 1:
+                intensity = int(parts[1])
+                # 1-10 映射：1=轻微 ~ 10=重度
+                dk["jpeg_quality"] = max(5, min(80, int(85 - intensity * 8)))
+                dk["banding_level"] = max(2, min(128, int(14 - intensity)))
+                dk["pixelate_size"] = max(0, min(20, intensity - 1))
+            def _dproc(inp, out): digital_patina.digital_patina_image(inp, out, **dk)
+            async for r in self._download_and_process(event, image_url, _dproc, "电子包浆"):
+                yield r
+            return
+
+        # ── 哈哈镜 ─────────────────────────
+        _fm_num_map = {"1": "bulge", "2": "concave", "3": "cylinder_h",
+                       "4": "cylinder_v", "5": "wave", "6": "spiral"}
+        _fm_alias = {"凸": "bulge", "凹": "concave", "横柱": "cylinder_h",
+                     "竖柱": "cylinder_v", "波浪": "wave", "螺旋": "spiral"}
+        _fm_match = cmd_text == "哈哈镜"
+        _fm_type = None
+        _fm_strength = None
+        if not _fm_match and cmd_text.startswith("哈哈镜"):
+            rest = cmd_text[len("哈哈镜"):].strip()
+            if rest:
+                parts = rest.split(None, 1)
+                first = parts[0]
+                if first.isdigit():
+                    _fm_type = _fm_num_map.get(first, "bulge")
+                    if len(parts) > 1:
+                        try:
+                            _fm_strength = float(parts[1])
+                        except ValueError:
+                            pass
+                    _fm_match = True
+                elif first in _fm_alias:
+                    _fm_type = _fm_alias[first]
+                    if len(parts) > 1:
+                        try:
+                            _fm_strength = float(parts[1])
+                        except ValueError:
+                            pass
+                    _fm_match = True
+        if _fm_match:
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            fk = dict(mirror_type=self._fm_type, strength=self._fm_strength)
+            if _fm_type:
+                fk["mirror_type"] = _fm_type
+            if _fm_strength is not None:
+                fk["strength"] = _fm_strength
+            def _fproc(inp, out): funhouse_mirror.funhouse_mirror_image(inp, out, **fk)
+            async for r in self._download_and_process(event, image_url, _fproc, "哈哈镜"):
+                yield r
+            return
+
         # ── 反色 ────────────────────────────
         if cmd_text == "反色":
             image_url = None
-
-            # 头像：@用户
             if at_qq and self._enable_at_avatar:
                 image_url = QQ_AVATAR_URL.format(qq=at_qq)
-
-            # 引用/直接图片
             if not image_url:
                 image_url = self._extract_image_url(event)
-
             if not image_url:
                 return
-
             event.stop_event()
             async for r in self._download_and_process(event, image_url, invert.invert_image, "反色"):
                 yield r
@@ -194,6 +492,62 @@ class PicToolboxPlugin(Star):
                 return
             event.stop_event()
             async for r in self._download_and_process(event, image_url, mirror.mirror_bottom, "下对称"):
+                yield r
+            return
+
+        # ── 对称（统一：1=上 2=左 3=\ 4=/）─
+        _sym_m = re.match(r"^对称(\d)$", cmd_text)
+        _sym_n = None
+        if _sym_m:
+            _sym_n = int(_sym_m.group(1))
+        elif cmd_text == "对称":
+            _sym_n = 2
+        else:
+            m2 = re.match(r"^对称\s+(\d)$", cmd_text)
+            if m2:
+                _sym_n = int(m2.group(1))
+        if _sym_n is not None:
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            _sn = _sym_n
+            def _sym_proc(inp, out): mirror.mirror_by_type(inp, out, mirror_type=_sn)
+            async for r in self._download_and_process(event, image_url, _sym_proc, f"对称{_sn}"):
+                yield r
+            return
+
+        # ── 真对称（延展型，画布扩大）────────
+        _zs_m = re.match(r"^真对称(\d)$", cmd_text)
+        _zs_n = None
+        if _zs_m:
+            _zs_n = int(_zs_m.group(1))
+        elif cmd_text == "真对称":
+            _zs_n = 1
+        else:
+            m2 = re.match(r"^真对称\s+(\d)$", cmd_text)
+            if m2:
+                _zs_n = int(m2.group(1))
+        if _zs_n is not None and 1 <= _zs_n <= 4:
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            _zn = _zs_n
+            def _zs_proc(inp, out): mirror.extend_symmetry(inp, out, direction=_zn)
+            async for r in self._download_and_process(event, image_url, _zs_proc, f"真对称{_zn}"):
                 yield r
             return
 
@@ -342,6 +696,64 @@ class PicToolboxPlugin(Star):
                 return
             event.stop_event()
             async for r in self._download_and_process(event, image_url, reverse.reverse_gif, "倒放"):
+                yield r
+            return
+
+        # ── 往返（GIF 正序+倒序 ping-pong）───
+        if cmd_text == "往返":
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+            async for r in self._download_and_process(event, image_url, roundtrip.roundtrip_gif, "往返"):
+                yield r
+            return
+
+        # ── 裸眼3D ─────────────────────────
+        _be3d_match = cmd_text in ("裸眼3d", "裸眼3D")
+        _be3d_intensity = None
+        if not _be3d_match:
+            m = re.match(r"^裸眼3[dD]\s+(\d+)$", cmd_text)
+            if m:
+                _be3d_match = True
+                _be3d_intensity = int(m.group(1))
+        if _be3d_match:
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = None
+            if at_qq and self._enable_at_avatar:
+                image_url = QQ_AVATAR_URL.format(qq=at_qq)
+            if not image_url:
+                image_url = self._extract_image_url(event)
+            if not image_url:
+                return
+            event.stop_event()
+
+            be3d_kwargs = dict(
+                line_spacing=self._be3d_line_spacing,
+                line_width=self._be3d_line_width,
+                line_alpha=self._be3d_line_alpha,
+                line_direction=self._be3d_line_direction,
+                mask_threshold=self._be3d_mask_threshold,
+                mask_blur=self._be3d_mask_blur,
+                foreground_blur=self._be3d_foreground_blur,
+                max_frames=self._be3d_max_frames,
+            )
+            if _be3d_intensity is not None:
+                i = max(1, min(10, _be3d_intensity))
+                be3d_kwargs["line_spacing"] = max(30, 120 - i * 8)
+                be3d_kwargs["line_width"] = max(1, min(6, i // 2 + 1))
+                be3d_kwargs["mask_threshold"] = max(5, 45 - i * 4)
+            def _be3d_proc(inp, out):
+                bare_eye_3d.bare_eye_3d(inp, out, **be3d_kwargs)
+
+            async for r in self._download_and_process(event, image_url, _be3d_proc, "裸眼3d"):
                 yield r
             return
 

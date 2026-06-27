@@ -28,5 +28,218 @@
     "type": "int",
     "default": 8,
     "hint": "「马赛克」指令不带参数时的默认马赛克块边长（2~50，值越大越糊）"
+  },
+  "be3d_line_spacing": {
+    "description": "裸眼3D - 分割白线间距（像素），值越大线条越稀疏",
+    "type": "int",
+    "default": 80,
+    "hint": "推荐60-120，越小分割越密。模拟'窗格'大小，影响背景层次感"
+  },
+  "be3d_line_width": {
+    "description": "裸眼3D - 分割白线宽度（像素），线条粗细",
+    "type": "int",
+    "default": 3,
+    "hint": "推荐2-5，太细不明显，太粗遮挡过多画面"
+  },
+  "be3d_line_alpha": {
+    "description": "裸眼3D - 分割线透明度 0-255",
+    "type": "int",
+    "default": 200,
+    "hint": "推荐150-255，略透明使线条不遮挡过多画面细节"
+  },
+  "be3d_line_direction": {
+    "description": "裸眼3D - 线条方向",
+    "type": "string",
+    "default": "both",
+    "hint": "both=网格线, horizontal=水平线, vertical=垂直线",
+    "options": ["both", "horizontal", "vertical"]
+  },
+  "be3d_mask_threshold": {
+    "description": "裸眼3D - 前景检测灵敏度阈值 0-255",
+    "type": "int",
+    "default": 25,
+    "hint": "推荐15-40。值太小会提取过多背景噪点，太大会丢失运动主体"
+  },
+  "be3d_mask_blur": {
+    "description": "裸眼3D - 前景边缘模糊半径",
+    "type": "int",
+    "default": 7,
+    "hint": "推荐3-10。用于平滑前景边缘，避免生硬切边"
+  },
+  "be3d_foreground_blur": {
+    "description": "裸眼3D - 前景高斯模糊半径（模拟景深），0=不模糊",
+    "type": "int",
+    "default": 0,
+    "hint": "推荐0-5。前景轻微模糊可模拟镜头景深，增强立体感"
+  },
+  "spin_direction": {
+    "description": "旋转 - 方向",
+    "type": "string",
+    "default": "clockwise",
+    "hint": "顺时针 / 逆时针",
+    "options": ["clockwise", "counterclockwise"]
+  },
+  "glitch_max_shift": {
+    "description": "故障 - RGB 通道最大偏移像素",
+    "type": "int",
+    "default": 15,
+    "hint": "推荐5~30。值越大通道分离越明显，撕裂感越强"
+  },
+  "glitch_num_frames": {
+    "description": "故障 - GIF 帧数",
+    "type": "int",
+    "default": 8,
+    "hint": "推荐6~15。越多帧越流畅，但文件越大"
+  },
+  "glitch_frame_delay": {
+    "description": "故障 - 每帧延迟（毫秒）",
+    "type": "int",
+    "default": 80,
+    "hint": "推荐60~120。值越大动画越慢，故障感越顿挫"
+  },
+  "kal_sectors": {
+    "description": "万花筒 - 扇区数",
+    "type": "int",
+    "default": 8,
+    "hint": "推荐4/6/8/12。越大图案越细密，视觉越花哨"
+  },
+  "kal_zoom": {
+    "description": "万花筒 - 中心缩放比例",
+    "type": "float",
+    "default": 0.5,
+    "hint": "0.1~1.0。越小取的源图区域越中心，图案越繁复"
+  },
+  "kal_angle_step": {
+    "description": "万花筒 - 每帧旋转角度",
+    "type": "int",
+    "default": 3,
+    "hint": "越大转得越快（1~15）。帧数=360/angle_step"
+  },
+  "kal_frame_delay": {
+    "description": "万花筒 - 每帧延迟（毫秒）",
+    "type": "int",
+    "default": 40,
+    "hint": "推荐30~60"
+  },
+  "dither_num_colors": {
+    "description": "抖动 - 输出颜色数",
+    "type": "int",
+    "default": 16,
+    "hint": "2~256。2=纯黑白，16=复古8-bit风，数值越小越复古"
+  },
+  "breath_min_scale": {
+    "description": "呼吸 - 收缩到最小时的比例",
+    "type": "float",
+    "default": 0.92,
+    "hint": "0.5~0.99。值越小收缩越狠"
+  },
+  "breath_max_scale": {
+    "description": "呼吸 - 放大到最大时的比例",
+    "type": "float",
+    "default": 1.08,
+    "hint": "1.01~2.0。值越大放大越明显"
+  },
+  "breath_frames": {
+    "description": "呼吸 - 一次完整周期的帧数",
+    "type": "int",
+    "default": 30,
+    "hint": "推荐20~60。越多呼吸越平滑"
+  },
+  "patina_sepia_strength": {
+    "description": "包浆 - 暖黄 Sepia 染色强度",
+    "type": "int",
+    "default": 60,
+    "hint": "0~100。值越大暖黄调越重，模拟老照片发黄"
+  },
+  "patina_vignette_strength": {
+    "description": "包浆 - 暗角强度",
+    "type": "int",
+    "default": 40,
+    "hint": "0~100。值越大边缘越暗，模拟镜头老化"
+  },
+  "patina_noise_amount": {
+    "description": "包浆 - 颗粒噪点量",
+    "type": "int",
+    "default": 20,
+    "hint": "0~100。值越大胶片颗粒感越强"
+  },
+  "patina_fade_amount": {
+    "description": "包浆 - 褪色程度",
+    "type": "int",
+    "default": 30,
+    "hint": "0~100。值越大颜色越淡、对比度越低"
+  },
+  "popart_num_colors": {
+    "description": "波普 - 颜色数",
+    "type": "int",
+    "default": 6,
+    "hint": "2~8。越小越接近波普标志性色块风"
+  },
+  "popart_edge_width": {
+    "description": "波普 - 描边宽度",
+    "type": "int",
+    "default": 3,
+    "hint": "0~10。0=不描边，值越大黑色轮廓线越粗"
+  },
+  "popart_halftone_size": {
+    "description": "波普 - 半调网点大小",
+    "type": "int",
+    "default": 0,
+    "hint": "0=不启用。4~12 产生李奇登斯坦风格网点"
+  },
+  "popart_panels": {
+    "description": "波普 - 多联画格数",
+    "type": "int",
+    "default": 4,
+    "hint": "1=单图，2=双联，4=2×2四联（不同配色）"
+  },
+  "digital_patina_jpeg_quality": {
+    "description": "电子包浆 - JPEG 压缩质量",
+    "type": "int",
+    "default": 15,
+    "hint": "1~100。值越低块状伪影越严重，5~20 效果明显"
+  },
+  "digital_patina_banding_level": {
+    "description": "电子包浆 - 色彩断层色阶数",
+    "type": "int",
+    "default": 5,
+    "hint": "2~256。越小断层越明显，推荐 4~8"
+  },
+  "digital_patina_pixelate_size": {
+    "description": "电子包浆 - 像素化块大小",
+    "type": "int",
+    "default": 0,
+    "hint": "0=不启用。2~20，值越大越糊"
+  },
+  "funhouse_mirror_type": {
+    "description": "哈哈镜 - 扭曲类型",
+    "type": "string",
+    "default": "bulge",
+    "options": ["bulge", "concave", "cylinder_h", "cylinder_v", "wave", "spiral"],
+    "hint": "1=凸透镜 2=凹透镜 3=横柱面 4=竖柱面 5=波浪 6=螺旋"
+  },
+  "funhouse_mirror_strength": {
+    "description": "哈哈镜 - 扭曲强度",
+    "type": "float",
+    "default": 1.0,
+    "hint": "0.1~2.0。值越大变形越夸张"
+  },
+  "breath_frame_delay": {
+    "description": "呼吸 - 每帧延迟（毫秒）",
+    "type": "int",
+    "default": 40,
+    "hint": "推荐30~60。值越大呼吸越慢越柔和"
+  },
+  "spin_angle_step": {
+    "description": "旋转 - 每帧旋转角度",
+    "type": "int",
+    "default": 6,
+    "hint": "值越大转得越快（1~30），6=60帧转一圈。帧数=360/angle_step"
+  },
+  "be3d_max_frames": {
+    "description": "裸眼3D - 最大处理帧数",
+    "type": "int",
+    "default": 48,
+    "hint": "GIF帧数过多时均匀采样降低处理负担，过低影响流畅度"
   }
 }
