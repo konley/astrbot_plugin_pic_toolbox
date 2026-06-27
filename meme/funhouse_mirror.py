@@ -1,4 +1,4 @@
-"""哈哈镜模块：曲面镜扭曲效果（凸/凹/柱面/波浪/螺旋）"""
+"""扭曲模块：曲面镜扭曲效果（凸/凹/柱面/波浪/螺旋）"""
 
 import cv2
 import numpy as np
@@ -76,7 +76,7 @@ def _apply_distortion(img_rgba, mirror_type, strength):
 
 def funhouse_mirror_image(input_path, output_path,
                           mirror_type="bulge", strength=1.0):
-    """对图片/GIF 应用哈哈镜扭曲效果。
+    """对图片/GIF 应用扭曲效果。
 
     Args:
         mirror_type: bulge / concave / cylinder_h / cylinder_v / wave / spiral

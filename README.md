@@ -1,6 +1,6 @@
 # 🖼️ 图片处理工具箱 (astrbot_plugin_pic_toolbox)
 
-基于 AstrBot 框架的群聊图片 / 头像处理插件。支持静态图和 GIF 的**反色、翻转、对称、旋转、故障、万花筒、抖动、呼吸、包浆、波普、电子包浆、哈哈镜、裸眼3D、马赛克、调速、倒放、往返**以及**摸头杀、发射、撅人、抽、砍头**等一系列趣味表情包生成。所有 GIF 处理统一使用增量帧展开管道，保留原图时长、透明度与循环信息。
+基于 AstrBot 框架的群聊图片 / 头像处理插件。支持静态图和 GIF 的**反色、翻转、对称、旋转、故障、万花筒、抖动、呼吸、包浆、波普、电子包浆、扭曲、裸眼3D、马赛克、调速、倒放、往返**以及**摸头杀、发射、撅人、抽、砍头**等一系列趣味表情包生成。所有 GIF 处理统一使用增量帧展开管道，保留原图时长、透明度与循环信息。
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-2.0.0-blue" alt="Version">
@@ -46,7 +46,7 @@
 | `包浆 [强度]` | Sepia 染色 + 暗角 + 噪点 + 褪色，老照片感 | 同上 |
 | `波普 [格数]` | Pop Art 波普艺术（默认 4 联画不同配色） | 同上 |
 | `电子包浆 [程度]` | JPEG 伪影 + 色彩断层 + 像素化，互联网蹂躏感 | 同上 |
-| `哈哈镜 [类型] [强度]` | 6 种扭曲（凸/凹/横柱/竖柱/波浪/螺旋） | 同上 |
+| `扭曲 [类型] [强度]` | 6 种扭曲（凸/凹/横柱/竖柱/波浪/螺旋） | 同上 |
 | `裸眼3d [强度]` | 帧差法前景提取，裸眼3D 效果 GIF | 同上 |
 | `马赛克 [程度]` | 马赛克处理，默认块大小 8 | 同上 |
 
@@ -73,7 +73,7 @@
 
 - **图片来源优先级**：①引用回复图片 ②直接发送图片 ③ `@用户` 的 QQ 头像（需开启 `enable_at_avatar`）
 - **GIF 全支持**：所有变换和特效指令均正确处理 GIF 增量帧，保留时长、透明度与循环信息
-- **紧凑语法**：`对称1` `哈哈镜1 0.5` `旋转12` 等支持不带空格触发
+- **紧凑语法**：`对称1` `扭曲1 0.5` `旋转12` 等支持不带空格触发
 - **带参触发**：多数指令支持参数覆盖配置默认值
 - **精准匹配**：`match_mode` 开启后可直接发送词语触发，无需 `/` 前缀
 - **自动清理**：启动时清理超过 1 小时的残留临时文件，处理后 10 秒自动删除输出文件
@@ -97,7 +97,7 @@
 | `patina_sepia_strength` / `patina_vignette_strength` / `patina_noise_amount` / `patina_fade_amount` | int | `60` / `40` / `20` / `30` | 包浆参数 |
 | `popart_num_colors` / `popart_edge_width` / `popart_halftone_size` / `popart_panels` | int | `6` / `3` / `0` / `4` | 波普艺术参数 |
 | `digital_patina_jpeg_quality` / `digital_patina_banding_level` / `digital_patina_pixelate_size` | int | `15` / `5` / `0` | 电子包浆参数 |
-| `funhouse_mirror_type` / `funhouse_mirror_strength` | str/float | `bulge` / `1.0` | 哈哈镜类型与强度 |
+| `funhouse_mirror_type` / `funhouse_mirror_strength` | str/float | `bulge` / `1.0` | 扭曲类型与强度 |
 | `be3d_line_spacing` / `be3d_line_width` / `be3d_line_alpha` / `be3d_line_direction` / `be3d_mask_threshold` / `be3d_mask_blur` / `be3d_foreground_blur` / `be3d_max_frames` | int/int/int/str/int/int/int/int | `80` / `3` / `200` / `both` / `25` / `7` / `0` / `48` | 裸眼3D 参数 |
 
 ---
@@ -175,7 +175,7 @@ astrbot_plugin_pic_toolbox/
 │   ├── patina.py        # 包浆做旧
 │   ├── popart.py        # 波普艺术
 │   ├── digital_patina.py # 电子包浆
-│   ├── funhouse_mirror.py # 哈哈镜扭曲
+│   ├── funhouse_mirror.py # 扭曲扭曲
 │   ├── bare_eye_3d.py   # 裸眼3D
 │   ├── gif_speed.py     # GIF 调速
 │   ├── pixelate.py      # 马赛克

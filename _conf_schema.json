@@ -218,14 +218,14 @@
     "hint": "0~100，越大越绿，0=无色偏"
   },
   "funhouse_mirror_type": {
-    "description": "哈哈镜 - 扭曲类型",
+    "description": "扭曲 - 扭曲类型",
     "type": "string",
     "default": "bulge",
     "options": ["bulge", "concave", "cylinder_h", "cylinder_v", "wave", "spiral"],
     "hint": "1=凸透镜 2=凹透镜 3=横柱面 4=竖柱面 5=波浪 6=螺旋"
   },
   "funhouse_mirror_strength": {
-    "description": "哈哈镜 - 扭曲强度",
+    "description": "扭曲 - 扭曲强度",
     "type": "float",
     "default": 1.0,
     "hint": "0.1~2.0。值越大变形越夸张"

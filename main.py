@@ -98,7 +98,7 @@ class PicToolboxPlugin(Star):
         self._dp_banding = config.get("digital_patina_banding_level", 5)
         self._dp_pixelate = config.get("digital_patina_pixelate_size", 0)
         self._dp_green = config.get("digital_patina_green_tint", 40)
-        # 哈哈镜参数
+        # 扭曲参数
         self._fm_type = config.get("funhouse_mirror_type", "bulge")
         self._fm_strength = config.get("funhouse_mirror_strength", 1.0)
         # 启动时清理旧临时文件（进程崩溃残留）
@@ -139,17 +139,19 @@ class PicToolboxPlugin(Star):
                 "🖼️ 特效\n"
                 "  故障 [强度] | 万花筒 [扇区] | 抖动 [颜色数]\n"
                 "  呼吸 [帧延迟] | 包浆 [强度] | 电子包浆 [程度]\n"
-                "  哈哈镜 [类型] [强度] | 波普 [格数] | 马赛克 [程度] | 裸眼3d [强度]\n"
+                "  扭曲 [类型] [强度] | 波普 [格数] | 马赛克 [程度] | 裸眼3d [强度]\n"
                 "🔄 GIF\n"
                 "  加速 [倍率] | 调速 <倍率> | 倒放 | 往返\n"
                 "🎭 表情（@用户使用）\n"
                 "  摸头 | 发射 | 撅 | 抽 | 杀\n"
-                "💡 /帮助 /图帮助 /图help 显示本帮助"
+                "💡 /帮助 /图帮助 /图help 显示本帮助\n"
+                "⚙️ 更多参数可前往 WebUI 设置页面进行调整"
             )
             return
 
         # ── 旋转（转圈 GIF）─────────────────
-        if cmd_text == "旋转" or (cmd_text.startswith("旋转 ") and cmd_text.split(None, 1)[1].isdigit()):
+        _sx_m = re.match(r"^旋转(\d+)$", cmd_text)
+        if _sx_m or cmd_text == "旋转" or (cmd_text.startswith("旋转 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             image_url = self._resolve_image_url(event, at_qq)
@@ -160,9 +162,12 @@ class PicToolboxPlugin(Star):
                 direction=self._spin_direction,
                 angle_step=self._spin_angle_step,
             )
-            parts = cmd_text.split(None, 1)
-            if len(parts) > 1:
-                spin_kwargs["angle_step"] = max(1, min(360, int(parts[1])))
+            if _sx_m:
+                spin_kwargs["angle_step"] = max(1, min(360, int(_sx_m.group(1))))
+            else:
+                parts = cmd_text.split(None, 1)
+                if len(parts) > 1:
+                    spin_kwargs["angle_step"] = max(1, min(360, int(parts[1])))
             def _spin_proc(inp, out):
                 spin.spin_image(inp, out, **spin_kwargs)
             async for r in self._download_and_process(event, image_url, _spin_proc, "旋转"):
@@ -170,7 +175,8 @@ class PicToolboxPlugin(Star):
             return
 
         # ── 故障（RGB 通道偏移 GIF）──────────
-        if cmd_text == "故障" or (cmd_text.startswith("故障 ") and cmd_text.split(None, 1)[1].isdigit()):
+        _gz_m = re.match(r"^故障(\d+)$", cmd_text)
+        if _gz_m or cmd_text == "故障" or (cmd_text.startswith("故障 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             image_url = self._resolve_image_url(event, at_qq)
@@ -180,16 +186,20 @@ class PicToolboxPlugin(Star):
             gk = dict(max_shift=self._glitch_max_shift,
                       num_frames=self._glitch_num_frames,
                       frame_delay=self._glitch_frame_delay)
-            parts = cmd_text.split(None, 1)
-            if len(parts) > 1:
-                gk["max_shift"] = max(1, min(100, int(parts[1])))
+            if _gz_m:
+                gk["max_shift"] = max(1, min(100, int(_gz_m.group(1))))
+            else:
+                parts = cmd_text.split(None, 1)
+                if len(parts) > 1:
+                    gk["max_shift"] = max(1, min(100, int(parts[1])))
             def _gproc(inp, out): glitch.glitch_image(inp, out, **gk)
             async for r in self._download_and_process(event, image_url, _gproc, "故障"):
                 yield r
             return
 
         # ── 万花筒 ─────────────────────────
-        if cmd_text == "万花筒" or (cmd_text.startswith("万花筒 ") and cmd_text.split(None, 1)[1].isdigit()):
+        _wht_m = re.match(r"^万花筒(\d+)$", cmd_text)
+        if _wht_m or cmd_text == "万花筒" or (cmd_text.startswith("万花筒 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             image_url = self._resolve_image_url(event, at_qq)
@@ -199,16 +209,20 @@ class PicToolboxPlugin(Star):
             kk = dict(sectors=self._kal_sectors, zoom=self._kal_zoom,
                       angle_step=self._kal_angle_step,
                       frame_delay=self._kal_frame_delay)
-            parts = cmd_text.split(None, 1)
-            if len(parts) > 1:
-                kk["sectors"] = max(2, min(24, int(parts[1])))
+            if _wht_m:
+                kk["sectors"] = max(2, min(24, int(_wht_m.group(1))))
+            else:
+                parts = cmd_text.split(None, 1)
+                if len(parts) > 1:
+                    kk["sectors"] = max(2, min(24, int(parts[1])))
             def _kproc(inp, out): kaleidoscope.kaleidoscope_image(inp, out, **kk)
             async for r in self._download_and_process(event, image_url, _kproc, "万花筒"):
                 yield r
             return
 
         # ── 抖动（降色阶 8-bit 风）──────────
-        if cmd_text == "抖动" or (cmd_text.startswith("抖动 ") and cmd_text.split(None, 1)[1].isdigit()):
+        _dd_m = re.match(r"^抖动(\d+)$", cmd_text)
+        if _dd_m or cmd_text == "抖动" or (cmd_text.startswith("抖动 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             image_url = self._resolve_image_url(event, at_qq)
@@ -216,16 +230,20 @@ class PicToolboxPlugin(Star):
                 return
             event.stop_event()
             nc = self._dither_num_colors
-            parts = cmd_text.split(None, 1)
-            if len(parts) > 1:
-                nc = max(2, min(256, int(parts[1])))
+            if _dd_m:
+                nc = max(2, min(256, int(_dd_m.group(1))))
+            else:
+                parts = cmd_text.split(None, 1)
+                if len(parts) > 1:
+                    nc = max(2, min(256, int(parts[1])))
             def _dproc(inp, out): dither.dither_image(inp, out, num_colors=nc)
             async for r in self._download_and_process(event, image_url, _dproc, "抖动"):
                 yield r
             return
 
         # ── 呼吸（周期缩放 GIF）─────────────
-        if cmd_text == "呼吸" or (cmd_text.startswith("呼吸 ") and cmd_text.split(None, 1)[1].isdigit()):
+        _hx_m = re.match(r"^呼吸(\d+)$", cmd_text)
+        if _hx_m or cmd_text == "呼吸" or (cmd_text.startswith("呼吸 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             image_url = self._resolve_image_url(event, at_qq)
@@ -236,16 +254,20 @@ class PicToolboxPlugin(Star):
                       max_scale=self._breath_max_scale,
                       frames=self._breath_frames,
                       frame_delay=self._breath_frame_delay)
-            parts = cmd_text.split(None, 1)
-            if len(parts) > 1:
-                bk["frame_delay"] = max(10, min(1000, int(parts[1])))
+            if _hx_m:
+                bk["frame_delay"] = max(10, min(1000, int(_hx_m.group(1))))
+            else:
+                parts = cmd_text.split(None, 1)
+                if len(parts) > 1:
+                    bk["frame_delay"] = max(10, min(1000, int(parts[1])))
             def _bproc(inp, out): breathing.breathing_image(inp, out, **bk)
             async for r in self._download_and_process(event, image_url, _bproc, "呼吸"):
                 yield r
             return
 
         # ── 包浆（复古做旧）──────────────────
-        if cmd_text == "包浆" or (cmd_text.startswith("包浆 ") and cmd_text.split(None, 1)[1].isdigit()):
+        _bj_m = re.match(r"^包浆(\d+)$", cmd_text)
+        if _bj_m or cmd_text == "包浆" or (cmd_text.startswith("包浆 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             image_url = self._resolve_image_url(event, at_qq)
@@ -256,9 +278,12 @@ class PicToolboxPlugin(Star):
                       vignette_strength=self._patina_vignette,
                       noise_amount=self._patina_noise,
                       fade_amount=self._patina_fade)
-            parts = cmd_text.split(None, 1)
-            if len(parts) > 1:
-                s = max(0, min(100, float(parts[1]))) / 100.0
+            if _bj_m:
+                s = max(0, min(100, int(_bj_m.group(1)))) / 100.0
+            else:
+                parts = cmd_text.split(None, 1)
+                if len(parts) > 1:
+                    s = max(0, min(100, float(parts[1]))) / 100.0
                 pk["sepia_strength"] = int(pk["sepia_strength"] * s)
                 pk["vignette_strength"] = int(pk["vignette_strength"] * s)
                 pk["noise_amount"] = int(pk["noise_amount"] * s)
@@ -297,7 +322,8 @@ class PicToolboxPlugin(Star):
             return
 
         # ── 电子包浆 ───────────────────────
-        if cmd_text == "电子包浆" or (cmd_text.startswith("电子包浆 ") and cmd_text.split(None, 1)[1].isdigit()):
+        _dz_m = re.match(r"^电子包浆(\d+)$", cmd_text)
+        if _dz_m or cmd_text == "电子包浆" or (cmd_text.startswith("电子包浆 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             image_url = self._resolve_image_url(event, at_qq)
@@ -308,10 +334,12 @@ class PicToolboxPlugin(Star):
                       banding_level=self._dp_banding,
                       pixelate_size=self._dp_pixelate,
                       green_tint=self._dp_green)
-            parts = cmd_text.split(None, 1)
-            if len(parts) > 1:
-                intensity = int(parts[1])
-                # 1-10 映射：1=轻微 ~ 10=重度
+            if _dz_m:
+                intensity = int(_dz_m.group(1))
+            else:
+                parts = cmd_text.split(None, 1)
+                intensity = int(parts[1]) if len(parts) > 1 else None
+            if intensity is not None:
                 dk["jpeg_quality"] = max(5, min(80, int(85 - intensity * 8)))
                 dk["banding_level"] = max(2, min(128, int(14 - intensity)))
                 dk["pixelate_size"] = max(0, min(20, intensity - 1))
@@ -321,16 +349,16 @@ class PicToolboxPlugin(Star):
                 yield r
             return
 
-        # ── 哈哈镜 ─────────────────────────
+        # ── 扭曲 ─────────────────────────
         _fm_num_map = {"1": "bulge", "2": "concave", "3": "cylinder_h",
                        "4": "cylinder_v", "5": "wave", "6": "spiral"}
         _fm_alias = {"凸": "bulge", "凹": "concave", "横柱": "cylinder_h",
                      "竖柱": "cylinder_v", "波浪": "wave", "螺旋": "spiral"}
-        _fm_match = cmd_text == "哈哈镜"
+        _fm_match = cmd_text == "扭曲"
         _fm_type = None
         _fm_strength = None
-        if not _fm_match and cmd_text.startswith("哈哈镜"):
-            rest = cmd_text[len("哈哈镜"):].strip()
+        if not _fm_match and cmd_text.startswith("扭曲"):
+            rest = cmd_text[len("扭曲"):].strip()
             if rest:
                 parts = rest.split(None, 1)
                 first = parts[0]
@@ -363,7 +391,7 @@ class PicToolboxPlugin(Star):
             if _fm_strength is not None:
                 fk["strength"] = _fm_strength
             def _fproc(inp, out): funhouse_mirror.funhouse_mirror_image(inp, out, **fk)
-            async for r in self._download_and_process(event, image_url, _fproc, "哈哈镜"):
+            async for r in self._download_and_process(event, image_url, _fproc, "扭曲"):
                 yield r
             return
 
@@ -561,24 +589,27 @@ class PicToolboxPlugin(Star):
             return
 
         # ── 马赛克（可带程度参数）────────────────
-        if cmd_text == "马赛克" or cmd_text.startswith("马赛克 "):
+        _msk_m = re.match(r"^马赛克(\d+)$", cmd_text)
+        if _msk_m or cmd_text == "马赛克" or cmd_text.startswith("马赛克 "):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
             image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
 
-            # 解析程度参数
-            parts = cmd_text.split(None, 1)
             block_size = self._default_pixelate_block
-            if len(parts) > 1:
-                try:
-                    level = int(parts[1].strip())
-                    # 程度 1~10 级映射到 block_size 2~50
-                    block_size = max(2, min(50, 2 + (level - 1) * 5))
-                except ValueError:
-                    yield event.plain_result("马赛克程度请用数字，如「马赛克 5」")
-                    return
+            if _msk_m:
+                level = int(_msk_m.group(1))
+                block_size = max(2, min(50, 2 + (level - 1) * 5))
+            elif cmd_text.startswith("马赛克 "):
+                parts = cmd_text.split(None, 1)
+                if len(parts) > 1:
+                    try:
+                        level = int(parts[1].strip())
+                        block_size = max(2, min(50, 2 + (level - 1) * 5))
+                    except ValueError:
+                        yield event.plain_result("马赛克程度请用数字，如「马赛克 5」")
+                        return
 
             event.stop_event()
             def _pix_proc(inp, out, _bs=block_size):
@@ -588,21 +619,29 @@ class PicToolboxPlugin(Star):
             return
 
         # ── 加速（默认 2 倍，可带倍数参数）──────
-        if cmd_text == "加速" or cmd_text.startswith("加速 "):
+        _js_m = re.match(r"^加速([\d.]+)$", cmd_text)
+        if _js_m or cmd_text == "加速" or cmd_text.startswith("加速 "):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
 
-            parts = cmd_text.split(None, 1)
             speed = self._default_speedup_factor
-            if len(parts) > 1:
+            if _js_m:
                 try:
-                    speed = gif_speed.parse_speed(parts[1].strip())
+                    speed = gif_speed.parse_speed(_js_m.group(1))
                 except ValueError as e:
                     yield event.plain_result(str(e))
                     return
+            elif cmd_text.startswith("加速 "):
+                parts = cmd_text.split(None, 1)
+                if len(parts) > 1:
+                    try:
+                        speed = gif_speed.parse_speed(parts[1].strip())
+                    except ValueError as e:
+                        yield event.plain_result(str(e))
+                        return
 
             event.stop_event()
             speed_result = {"warning": None}
@@ -647,6 +686,11 @@ class PicToolboxPlugin(Star):
         _be3d_match = cmd_text in ("裸眼3d", "裸眼3D")
         _be3d_intensity = None
         if not _be3d_match:
+            m = re.match(r"^裸眼3[dD](\d+)$", cmd_text)
+            if m:
+                _be3d_match = True
+                _be3d_intensity = int(m.group(1))
+        if not _be3d_match:
             m = re.match(r"^裸眼3[dD]\s+(\d+)$", cmd_text)
             if m:
                 _be3d_match = True
@@ -682,7 +726,7 @@ class PicToolboxPlugin(Star):
             return
 
         # ── 调速（需精准匹配模式 或 显式 /）──
-        speed_match = re.match(r"^调速\s+([\d.]+)$", actual_cmd)
+        speed_match = re.match(r"^调速\s+([\d.]+)$", actual_cmd) or re.match(r"^调速([\d.]+)$", actual_cmd)
         if speed_match:
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
