@@ -1,8 +1,8 @@
-name: pic_toolbox
+name: kimage
 display_name: 小K图片处理工具箱
-desc: 多功能图片/GIF处理插件：旋转/故障/万花筒/抖动/呼吸/包浆/波普/电子包浆/哈哈镜/裸眼3D/反色/翻转/对称/马赛克/调速/倒放/往返及表情包生成。全指令支持动图输入，紧凑参数语法，22+ 配置项可调。
-version: 2.0.0
-author: konley (forked from Lucy)
-repo: https://github.com/konley/astrbot_plugin_pic_toolbox
+desc: kk图片工具箱，全能的群聊图片/GIF 处理工具。25+ 指令覆盖基础编辑、对称镜像、视觉特效、GIF动效、趣味表情包。全指令支持 GIF 输入，紧凑参数语法，20+ 可调配置项。
+version: 2.1.0
+author: konley
+repo: https://github.com/konley/astrbot_plugin_kimage
 support_platforms:
   - aiocqhttp

@@ -76,8 +76,10 @@ def mirror_by_type(input_path: str, output_path: str, mirror_type: int = 1):
         2 = 上对称（保留上半部镜像到下半部）
         3 = \\ 对角线对称（保留左上三角形）
         4 = / 对角线对称（保留右上三角形）
+        5 = 右对称（保留右半部镜像到左半部）
+        6 = 下对称（保留下半部镜像到上半部）
     """
-    mapping = {1: "left", 2: "top", 3: "diag_tl", 4: "diag_tr"}
+    mapping = {1: "left", 2: "top", 3: "diag_tl", 4: "diag_tr", 5: "right", 6: "bottom"}
     keep = mapping.get(mirror_type, "left")
 
     if not is_gif(input_path):

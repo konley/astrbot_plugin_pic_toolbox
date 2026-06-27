@@ -8,19 +8,19 @@
   "match_mode": {
     "description": "词语精准匹配模式",
     "type": "bool",
-    "default": false,
+    "default": true,
     "hint": "开启后，引用图片直接发「反色」或「调速 倍数」（无需 /），即可触发"
   },
   "gif_speed_allow_frame_drop": {
     "description": "GIF调速允许丢帧加速",
     "type": "bool",
-    "default": false,
+    "default": true,
     "hint": "当调速倍率使帧率超过50FPS时，允许通过均匀丢帧达成目标倍率；关闭时自动回退到不超过50FPS的最高倍率"
   },
   "default_speedup_factor": {
     "description": "加速指令默认倍率",
     "type": "float",
-    "default": 2.0,
+    "default": 2.5,
     "hint": "「加速」指令不带参数时的默认速度倍率（0.3~5.0）"
   },
   "default_pixelate_block": {
@@ -32,14 +32,14 @@
   "be3d_line_spacing": {
     "description": "裸眼3D - 分割白线间距（像素），值越大线条越稀疏",
     "type": "int",
-    "default": 80,
-    "hint": "推荐60-120，越小分割越密。模拟'窗格'大小，影响背景层次感"
+    "default": 40,
+    "hint": "推荐20-60，越小分割越密。模拟'窗格'大小，影响背景层次感"
   },
   "be3d_line_width": {
     "description": "裸眼3D - 分割白线宽度（像素），线条粗细",
     "type": "int",
-    "default": 3,
-    "hint": "推荐2-5，太细不明显，太粗遮挡过多画面"
+    "default": 4,
+    "hint": "推荐2-6，太细不明显，太粗遮挡过多画面"
   },
   "be3d_line_alpha": {
     "description": "裸眼3D - 分割线透明度 0-255",
@@ -57,8 +57,8 @@
   "be3d_mask_threshold": {
     "description": "裸眼3D - 前景检测灵敏度阈值 0-255",
     "type": "int",
-    "default": 25,
-    "hint": "推荐15-40。值太小会提取过多背景噪点，太大会丢失运动主体"
+    "default": 15,
+    "hint": "推荐10-30。值太小会提取过多背景噪点，太大会丢失运动主体"
   },
   "be3d_mask_blur": {
     "description": "裸眼3D - 前景边缘模糊半径",
@@ -172,13 +172,13 @@
   "popart_num_colors": {
     "description": "波普 - 颜色数",
     "type": "int",
-    "default": 6,
-    "hint": "2~8。越小越接近波普标志性色块风"
+    "default": 8,
+    "hint": "2~16。越小越接近波普标志性色块风"
   },
   "popart_edge_width": {
     "description": "波普 - 描边宽度",
     "type": "int",
-    "default": 3,
+    "default": 1,
     "hint": "0~10。0=不描边，值越大黑色轮廓线越粗"
   },
   "popart_halftone_size": {
@@ -190,7 +190,7 @@
   "popart_panels": {
     "description": "波普 - 多联画格数",
     "type": "int",
-    "default": 4,
+    "default": 2,
     "hint": "1=单图，2=双联，4=2×2四联（不同配色）"
   },
   "digital_patina_jpeg_quality": {

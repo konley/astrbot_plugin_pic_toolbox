@@ -51,16 +51,16 @@ class PicToolboxPlugin(Star):
         if config is None:
             config = {}
         self._enable_at_avatar = config.get("enable_at_avatar", True)
-        self._match_mode = config.get("match_mode", False)
-        self._gif_speed_allow_frame_drop = config.get("gif_speed_allow_frame_drop", False)
-        self._default_speedup_factor = config.get("default_speedup_factor", 2.0)
+        self._match_mode = config.get("match_mode", True)
+        self._gif_speed_allow_frame_drop = config.get("gif_speed_allow_frame_drop", True)
+        self._default_speedup_factor = config.get("default_speedup_factor", 2.5)
         self._default_pixelate_block = config.get("default_pixelate_block", 8)
         # 裸眼3D 参数
-        self._be3d_line_spacing = config.get("be3d_line_spacing", 80)
-        self._be3d_line_width = config.get("be3d_line_width", 3)
+        self._be3d_line_spacing = config.get("be3d_line_spacing", 40)
+        self._be3d_line_width = config.get("be3d_line_width", 4)
         self._be3d_line_alpha = config.get("be3d_line_alpha", 200)
         self._be3d_line_direction = config.get("be3d_line_direction", "both")
-        self._be3d_mask_threshold = config.get("be3d_mask_threshold", 25)
+        self._be3d_mask_threshold = config.get("be3d_mask_threshold", 15)
         self._be3d_mask_blur = config.get("be3d_mask_blur", 7)
         self._be3d_foreground_blur = config.get("be3d_foreground_blur", 0)
         self._be3d_max_frames = config.get("be3d_max_frames", 48)
@@ -89,10 +89,10 @@ class PicToolboxPlugin(Star):
         self._patina_noise = config.get("patina_noise_amount", 20)
         self._patina_fade = config.get("patina_fade_amount", 30)
         # 波普参数
-        self._pop_colors = config.get("popart_num_colors", 6)
-        self._pop_edge = config.get("popart_edge_width", 3)
+        self._pop_colors = config.get("popart_num_colors", 8)
+        self._pop_edge = config.get("popart_edge_width", 1)
         self._pop_halftone = config.get("popart_halftone_size", 0)
-        self._pop_panels = config.get("popart_panels", 4)
+        self._pop_panels = config.get("popart_panels", 2)
         # 电子包浆参数
         self._dp_jpeg = config.get("digital_patina_jpeg_quality", 15)
         self._dp_banding = config.get("digital_patina_banding_level", 5)
@@ -134,8 +134,10 @@ class PicToolboxPlugin(Star):
                 "🎨 基础\n"
                 "  反色 | 旋转 [角度步长] | 左右翻转 | 上下翻转\n"
                 "🪞 对称\n"
-                "  对称[1-4]（1=左 2=上 3=\\ 4=/）| 真对称[1-4]（1=右 2=左 3=上 4=下）\n"
-                "  左对称 | 右对称 | 上对称 | 下对称\n"
+                "  对称[1-6/左/右/上/下/左上/右上]（1=左 2=上 3=\\ 4=/ 5=右 6=下，默认左）\n"
+                "  左对称 | 右对称 | 上对称 | 下对称 | 左上对称 | 右上对称\n"
+                "  真对称[1-4/右/左/上/下]（1=右 2=左 3=上 4=下，默认右）\n"
+                "  右真对称 | 左真对称 | 上真对称 | 下真对称\n"
                 "🖼️ 特效\n"
                 "  故障 [强度] | 万花筒 [扇区] | 抖动 [颜色数]\n"
                 "  呼吸 [帧延迟] | 包浆 [强度] | 电子包浆 [程度]\n"
@@ -479,7 +481,34 @@ class PicToolboxPlugin(Star):
                 yield r
             return
 
-        # ── 对称（统一：1=上 2=左 3=\ 4=/）─
+        # ── 左上对称（\ 对角线）────────────
+        if cmd_text == "左上对称":
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = self._resolve_image_url(event, at_qq)
+            if not image_url:
+                return
+            event.stop_event()
+            def _zsym_proc(inp, out): mirror.mirror_by_type(inp, out, mirror_type=3)
+            async for r in self._download_and_process(event, image_url, _zsym_proc, "左上对称"):
+                yield r
+            return
+
+        # ── 右上对称（/ 对角线）────────────
+        if cmd_text == "右上对称":
+            if not self._match_mode and not actual_cmd.startswith("/"):
+                return
+            image_url = self._resolve_image_url(event, at_qq)
+            if not image_url:
+                return
+            event.stop_event()
+            def _ysym_proc(inp, out): mirror.mirror_by_type(inp, out, mirror_type=4)
+            async for r in self._download_and_process(event, image_url, _ysym_proc, "右上对称"):
+                yield r
+            return
+
+        # ── 对称（统一：1=左 2=上 3=\ 4=/）─
+        _sym_dir = {"左": 1, "上": 2, "左上": 3, "右上": 4, "右": 5, "下": 6}
         _sym_m = re.match(r"^对称(\d)$", cmd_text)
         _sym_n = None
         if _sym_m:
@@ -490,6 +519,11 @@ class PicToolboxPlugin(Star):
             m2 = re.match(r"^对称\s+(\d)$", cmd_text)
             if m2:
                 _sym_n = int(m2.group(1))
+            else:
+                for word, n in _sym_dir.items():
+                    if cmd_text in (f"对称{word}", f"对称 {word}"):
+                        _sym_n = n
+                        break
         if _sym_n is not None:
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
@@ -497,13 +531,14 @@ class PicToolboxPlugin(Star):
             if not image_url:
                 return
             event.stop_event()
-            _sn = max(1, min(4, _sym_n))
+            _sn = max(1, min(6, _sym_n))
             def _sym_proc(inp, out): mirror.mirror_by_type(inp, out, mirror_type=_sn)
             async for r in self._download_and_process(event, image_url, _sym_proc, f"对称{_sn}"):
                 yield r
             return
 
         # ── 真对称（延展型，画布扩大）────────
+        _zs_dir = {"右": 1, "左": 2, "上": 3, "下": 4}
         _zs_m = re.match(r"^真对称(\d)$", cmd_text)
         _zs_n = None
         if _zs_m:
@@ -514,6 +549,16 @@ class PicToolboxPlugin(Star):
             m2 = re.match(r"^真对称\s+(\d)$", cmd_text)
             if m2:
                 _zs_n = int(m2.group(1))
+            else:
+                for word, n in _zs_dir.items():
+                    if cmd_text in (f"真对称{word}", f"真对称 {word}"):
+                        _zs_n = n
+                        break
+        if _zs_n is None:
+            # 左真对称 / 右真对称 / 上真对称 / 下真对称
+            m3 = re.match(r"^(左|右|上|下)真对称$", cmd_text)
+            if m3:
+                _zs_n = _zs_dir.get(m3.group(1))
         if _zs_n is not None and 1 <= _zs_n <= 4:
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return

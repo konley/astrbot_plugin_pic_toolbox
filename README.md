@@ -1,9 +1,9 @@
-# 🖼️ 图片处理工具箱 (astrbot_plugin_pic_toolbox)
+# 🖼️ 小K图片处理工具箱 (astrbot_plugin_kimage)
 
 基于 AstrBot 框架的群聊图片 / 头像处理插件。支持静态图和 GIF 的**反色、翻转、对称、旋转、故障、万花筒、抖动、呼吸、包浆、波普、电子包浆、扭曲、裸眼3D、马赛克、调速、倒放、往返**以及**摸头杀、发射、撅人、抽、砍头**等一系列趣味表情包生成。所有 GIF 处理统一使用增量帧展开管道，保留原图时长、透明度与循环信息。
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/Python-3.8%2B-blue" alt="Python">
   <img src="https://img.shields.io/badge/AstrBot-%E6%8F%92%E4%BB%B6%E6%A1%86%E6%9E%B6-brightgreen" alt="AstrBot">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
@@ -26,14 +26,15 @@
 
 | 指令 | 说明 | 图片来源 |
 | :--- | :--- | :--- |
-| `对称` / `对称1` | 保留左半边 → 镜像到右（默认） | 引用 / 直接 / `@用户` |
-| `对称2` | 保留上半边 → 镜像到下 | 同上 |
-| `对称3` | \\ 对角线对称（保留左上三角） | 同上 |
-| `对称4` | / 对角线对称（保留右上三角） | 同上 |
-| `左对称` / `右对称` / `上对称` / `下对称` | 传统四向对称（兼容保留） | 同上 |
-| `真对称[1-4]` | 延展型对称，画布扩大 | 同上 |
+| `对称` / `对称1` / `对称左` / `左对称` | 保留左半边 → 镜像到右（默认） | 引用 / 直接 / `@用户` |
+| `对称2` / `对称上` / `上对称` | 保留上半边 → 镜像到下 | 同上 |
+| `对称3` / `对称左上` / `左上对称` | \\ 对角线对称（保留左上三角） | 同上 |
+| `对称4` / `对称右上` / `右上对称` | / 对角线对称（保留右上三角） | 同上 |
+| `对称5` / `对称右` / `右对称` | 保留右半边 → 镜像到左 | 同上 |
+| `对称6` / `对称下` / `下对称` | 保留下半边 → 镜像到上 | 同上 |
+| `真对称[1-4]` / `真对称右/左/上/下` / `右/左/上/下真对称` | 延展型对称，画布扩大 | 同上 |
 
-> `真对称1` = 向右延展（原图左，翻转拼右，宽度翻倍），`2`=向左，`3`=向上，`4`=向下
+> `真对称1` / `真对称右` / `右真对称` = 向右延展（宽度翻倍），`2`/`真对称左`/`左真对称`=向左，`3`/`真对称上`/`上真对称`=向上，`4`/`真对称下`/`下真对称`=向下
 
 ### 🖼️ 视觉特效
 
@@ -44,7 +45,7 @@
 | `抖动 [颜色数]` | 降色阶 + Floyd-Steinberg 抖动，复古 8-bit | 同上 |
 | `呼吸 [帧延迟]` | 周期缩放呼吸动画 GIF | 同上 |
 | `包浆 [强度]` | Sepia 染色 + 暗角 + 噪点 + 褪色，老照片感 | 同上 |
-| `波普 [格数]` | Pop Art 波普艺术（默认 4 联画不同配色） | 同上 |
+| `波普 [格数]` | Pop Art 波普艺术（默认 2 联画不同配色，支持动图联画） | 同上 |
 | `电子包浆 [程度]` | JPEG 伪影 + 色彩断层 + 像素化，互联网蹂躏感 | 同上 |
 | `扭曲 [类型] [强度]` | 6 种扭曲（凸/凹/横柱/竖柱/波浪/螺旋） | 同上 |
 | `裸眼3d [强度]` | 帧差法前景提取，裸眼3D 效果 GIF | 同上 |
@@ -64,16 +65,16 @@
 
 | 指令 | 说明 | 图片来源 |
 | :--- | :--- | :--- |
-| `加速 [倍率]` | GIF 加速，默认 2 倍速，范围 0.3~5.0 | 引用 / 直接 |
+| `加速 [倍率]` | GIF 加速，默认 2.5 倍速，范围 0.3~5.0 | 引用 / 直接 |
 | `调速 <倍率>` | 精准 GIF 调速（必带参数） | 引用 / 直接 |
 | `倒放` | 反转 GIF 帧顺序 | 引用 / 直接 / `@用户` |
 | `往返` | GIF 正序+倒序 ping-pong 循环 | 同上 |
 
 ### 通用特性
 
-- **图片来源优先级**：①引用回复图片 ②直接发送图片 ③ `@用户` 的 QQ 头像（需开启 `enable_at_avatar`）
+- **图片来源优先级**：①引用回复图片 ②当前消息内联图片 ③ `@用户` 的 QQ 头像（需开启 `enable_at_avatar`）
 - **GIF 全支持**：所有变换和特效指令均正确处理 GIF 增量帧，保留时长、透明度与循环信息
-- **紧凑语法**：`对称1` `扭曲1 0.5` `旋转12` 等支持不带空格触发
+- **紧凑语法**：`对称1` `扭曲1 0.5` `旋转90` `加速2.5` 等全部单参命令支持不带空格触发
 - **带参触发**：多数指令支持参数覆盖配置默认值
 - **精准匹配**：`match_mode` 开启后可直接发送词语触发，无需 `/` 前缀
 - **自动清理**：启动时清理超过 1 小时的残留临时文件，处理后 10 秒自动删除输出文件
@@ -85,9 +86,9 @@
 | 配置 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `enable_at_avatar` | bool | `true` | 允许 `@用户 + 指令` 获取对方头像处理 |
-| `match_mode` | bool | `false` | 开启后直接发文字即可触发，无需 `/` 前缀 |
-| `gif_speed_allow_frame_drop` | bool | `false` | 调速超 50 FPS 时允许均匀丢帧 |
-| `default_speedup_factor` | float | `2.0` | 「加速」默认倍率 |
+| `match_mode` | bool | `true` | 开启后直接发文字即可触发，无需 `/` 前缀 |
+| `gif_speed_allow_frame_drop` | bool | `true` | 调速超 50 FPS 时允许均匀丢帧 |
+| `default_speedup_factor` | float | `2.5` | 「加速」默认倍率 |
 | `default_pixelate_block` | int | `8` | 「马赛克」默认块大小 |
 | `spin_direction` / `spin_angle_step` | str/int | `clockwise` / `6` | 旋转方向与每帧角度 |
 | `glitch_max_shift` / `glitch_num_frames` / `glitch_frame_delay` | int | `15` / `8` / `80` | 故障偏移/帧数/延迟 |
@@ -95,10 +96,10 @@
 | `dither_num_colors` | int | `16` | 抖动颜色数 |
 | `breath_min_scale` / `breath_max_scale` / `breath_frames` / `breath_frame_delay` | float/float/int/int | `0.92` / `1.08` / `30` / `40` | 呼吸缩放参数 |
 | `patina_sepia_strength` / `patina_vignette_strength` / `patina_noise_amount` / `patina_fade_amount` | int | `60` / `40` / `20` / `30` | 包浆参数 |
-| `popart_num_colors` / `popart_edge_width` / `popart_halftone_size` / `popart_panels` | int | `6` / `3` / `0` / `4` | 波普艺术参数 |
-| `digital_patina_jpeg_quality` / `digital_patina_banding_level` / `digital_patina_pixelate_size` | int | `15` / `5` / `0` | 电子包浆参数 |
+| `popart_num_colors` / `popart_edge_width` / `popart_halftone_size` / `popart_panels` | int | `8` / `1` / `0` / `2` | 波普艺术参数 |
+| `digital_patina_jpeg_quality` / `digital_patina_banding_level` / `digital_patina_pixelate_size` / `digital_patina_green_tint` | int | `15` / `5` / `0` / `40` | 电子包浆参数 |
 | `funhouse_mirror_type` / `funhouse_mirror_strength` | str/float | `bulge` / `1.0` | 扭曲类型与强度 |
-| `be3d_line_spacing` / `be3d_line_width` / `be3d_line_alpha` / `be3d_line_direction` / `be3d_mask_threshold` / `be3d_mask_blur` / `be3d_foreground_blur` / `be3d_max_frames` | int/int/int/str/int/int/int/int | `80` / `3` / `200` / `both` / `25` / `7` / `0` / `48` | 裸眼3D 参数 |
+| `be3d_line_spacing` / `be3d_line_width` / `be3d_line_alpha` / `be3d_line_direction` / `be3d_mask_threshold` / `be3d_mask_blur` / `be3d_foreground_blur` / `be3d_max_frames` | int/int/int/str/int/int/int/int | `40` / `4` / `200` / `both` / `15` / `7` / `0` / `48` | 裸眼3D 参数 |
 
 ---
 
@@ -156,7 +157,7 @@ Bot：  [取发送者 + 被 @ 者头像 → 生成撅人 GIF]
 ## 📁 项目结构
 
 ```
-astrbot_plugin_pic_toolbox/
+astrbot_plugin_kimage/
 ├── main.py              # 插件主体：指令路由与事件处理
 ├── metadata.yaml        # 插件元数据
 ├── _conf_schema.json    # 配置 Schema（22+ 配置项）
@@ -175,7 +176,7 @@ astrbot_plugin_pic_toolbox/
 │   ├── patina.py        # 包浆做旧
 │   ├── popart.py        # 波普艺术
 │   ├── digital_patina.py # 电子包浆
-│   ├── funhouse_mirror.py # 扭曲扭曲
+│   ├── funhouse_mirror.py # 扭曲
 │   ├── bare_eye_3d.py   # 裸眼3D
 │   ├── gif_speed.py     # GIF 调速
 │   ├── pixelate.py      # 马赛克
@@ -211,5 +212,6 @@ astrbot_plugin_pic_toolbox/
 - [nagadomi/lbpcascade_animeface](https://github.com/nagadomi/lbpcascade_animeface) — 动漫人脸级联分类器
 - [B1gM8c/Petpet](https://github.com/B1gM8c/Petpet) — 摸头杀原始算法
 - [meme-generator](https://github.com/MeetWq/meme-generator) — 表情包灵感来源
+- [lirundong093-glitch/astrbot_plugin_pic_toolbox](https://github.com/lirundong093-glitch/astrbot_plugin_pic_toolbox) — 本插件系其分支，感谢原作 Lucy
 
 <p align="center">Maintained by <a href="https://github.com/konley">konley</a></p>
