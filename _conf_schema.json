@@ -211,6 +211,12 @@
     "default": 0,
     "hint": "0=不启用。2~20，值越大越糊"
   },
+  "digital_patina_green_tint": {
+    "description": "电子包浆 - 绿色偏色强度",
+    "type": "int",
+    "default": 40,
+    "hint": "0~100，越大越绿，0=无色偏"
+  },
   "funhouse_mirror_type": {
     "description": "哈哈镜 - 扭曲类型",
     "type": "string",

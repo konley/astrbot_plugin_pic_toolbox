@@ -97,6 +97,7 @@ class PicToolboxPlugin(Star):
         self._dp_jpeg = config.get("digital_patina_jpeg_quality", 15)
         self._dp_banding = config.get("digital_patina_banding_level", 5)
         self._dp_pixelate = config.get("digital_patina_pixelate_size", 0)
+        self._dp_green = config.get("digital_patina_green_tint", 40)
         # 哈哈镜参数
         self._fm_type = config.get("funhouse_mirror_type", "bulge")
         self._fm_strength = config.get("funhouse_mirror_strength", 1.0)
@@ -128,15 +129,22 @@ class PicToolboxPlugin(Star):
         if cmd_text in ("帮助", "图帮助", "图help", "img_help"):
             event.stop_event()
             yield event.plain_result(
-                "🖼️ 图片处理工具箱\n"
-                "────────────────\n"
-                "发送或引用一张图片，附带以下指令：\n\n"
-                "🎨 基础：反色 | 旋转 [角度步长] | 左右翻转 | 上下翻转\n"
-                "🪞 对称：对称[1-4]（1=左 2=上 3=\\ 4=/）| 真对称[1-4] | 左对称 | 右对称 | 上对称 | 下对称\n"
-                "🖼️ 特效：故障 [强度] | 万花筒 [扇区] | 抖动 [颜色数] | 呼吸 [帧延迟] | 包浆 [强度] | 电子包浆 [程度] | 哈哈镜 [类型] | 波普 [格数] | 马赛克 [程度] | 裸眼3d [强度]\n"
-                "🔄 GIF：加速 [倍率] | 调速 <倍率> | 倒放 | 往返\n"
-                "🎭 表情：摸头 | 发射 | 撅 @人 | 抽 @人 | 杀 @人\n"
-                "ℹ️ /帮助 /图帮助 /图help 显示本信息"
+                "━━━ 小K图片处理工具箱 ━━━\n"
+                "发送或引用一张图片，附带以下指令：\n"
+                "🎨 基础\n"
+                "  反色 | 旋转 [角度步长] | 左右翻转 | 上下翻转\n"
+                "🪞 对称\n"
+                "  对称[1-4]（1=左 2=上 3=\\ 4=/）| 真对称[1-4]（1=右 2=左 3=上 4=下）\n"
+                "  左对称 | 右对称 | 上对称 | 下对称\n"
+                "🖼️ 特效\n"
+                "  故障 [强度] | 万花筒 [扇区] | 抖动 [颜色数]\n"
+                "  呼吸 [帧延迟] | 包浆 [强度] | 电子包浆 [程度]\n"
+                "  哈哈镜 [类型] [强度] | 波普 [格数] | 马赛克 [程度] | 裸眼3d [强度]\n"
+                "🔄 GIF\n"
+                "  加速 [倍率] | 调速 <倍率> | 倒放 | 往返\n"
+                "🎭 表情（@用户使用）\n"
+                "  摸头 | 发射 | 撅 | 抽 | 杀\n"
+                "💡 /帮助 /图帮助 /图help 显示本帮助"
             )
             return
 
@@ -144,11 +152,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "旋转" or (cmd_text.startswith("旋转 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -158,7 +162,7 @@ class PicToolboxPlugin(Star):
             )
             parts = cmd_text.split(None, 1)
             if len(parts) > 1:
-                spin_kwargs["angle_step"] = int(parts[1])
+                spin_kwargs["angle_step"] = max(1, min(360, int(parts[1])))
             def _spin_proc(inp, out):
                 spin.spin_image(inp, out, **spin_kwargs)
             async for r in self._download_and_process(event, image_url, _spin_proc, "旋转"):
@@ -169,11 +173,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "故障" or (cmd_text.startswith("故障 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -182,7 +182,7 @@ class PicToolboxPlugin(Star):
                       frame_delay=self._glitch_frame_delay)
             parts = cmd_text.split(None, 1)
             if len(parts) > 1:
-                gk["max_shift"] = int(parts[1])
+                gk["max_shift"] = max(1, min(100, int(parts[1])))
             def _gproc(inp, out): glitch.glitch_image(inp, out, **gk)
             async for r in self._download_and_process(event, image_url, _gproc, "故障"):
                 yield r
@@ -192,11 +192,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "万花筒" or (cmd_text.startswith("万花筒 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -205,7 +201,7 @@ class PicToolboxPlugin(Star):
                       frame_delay=self._kal_frame_delay)
             parts = cmd_text.split(None, 1)
             if len(parts) > 1:
-                kk["sectors"] = int(parts[1])
+                kk["sectors"] = max(2, min(24, int(parts[1])))
             def _kproc(inp, out): kaleidoscope.kaleidoscope_image(inp, out, **kk)
             async for r in self._download_and_process(event, image_url, _kproc, "万花筒"):
                 yield r
@@ -215,18 +211,14 @@ class PicToolboxPlugin(Star):
         if cmd_text == "抖动" or (cmd_text.startswith("抖动 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
             nc = self._dither_num_colors
             parts = cmd_text.split(None, 1)
             if len(parts) > 1:
-                nc = int(parts[1])
+                nc = max(2, min(256, int(parts[1])))
             def _dproc(inp, out): dither.dither_image(inp, out, num_colors=nc)
             async for r in self._download_and_process(event, image_url, _dproc, "抖动"):
                 yield r
@@ -236,11 +228,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "呼吸" or (cmd_text.startswith("呼吸 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -250,7 +238,7 @@ class PicToolboxPlugin(Star):
                       frame_delay=self._breath_frame_delay)
             parts = cmd_text.split(None, 1)
             if len(parts) > 1:
-                bk["frame_delay"] = int(parts[1])
+                bk["frame_delay"] = max(10, min(1000, int(parts[1])))
             def _bproc(inp, out): breathing.breathing_image(inp, out, **bk)
             async for r in self._download_and_process(event, image_url, _bproc, "呼吸"):
                 yield r
@@ -260,11 +248,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "包浆" or (cmd_text.startswith("包浆 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -274,7 +258,7 @@ class PicToolboxPlugin(Star):
                       fade_amount=self._patina_fade)
             parts = cmd_text.split(None, 1)
             if len(parts) > 1:
-                s = float(parts[1]) / 100.0
+                s = max(0, min(100, float(parts[1]))) / 100.0
                 pk["sepia_strength"] = int(pk["sepia_strength"] * s)
                 pk["vignette_strength"] = int(pk["vignette_strength"] * s)
                 pk["noise_amount"] = int(pk["noise_amount"] * s)
@@ -285,22 +269,28 @@ class PicToolboxPlugin(Star):
             return
 
         # ── 波普（Pop Art）───────────────────
-        if cmd_text == "波普" or (cmd_text.startswith("波普 ") and cmd_text.split(None, 1)[1].isdigit()):
+        _pp_match = False
+        _pp_panels = None
+        m = re.match(r"^波普(\d+)$", cmd_text)
+        if m:
+            _pp_match = True
+            _pp_panels = int(m.group(1))
+        elif cmd_text == "波普":
+            _pp_match = True
+        elif cmd_text.startswith("波普 ") and cmd_text.split(None, 1)[1].isdigit():
+            _pp_match = True
+            _pp_panels = int(cmd_text.split(None, 1)[1])
+        if _pp_match:
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
             pok = dict(num_colors=self._pop_colors, edge_width=self._pop_edge,
                        halftone_size=self._pop_halftone, panels=self._pop_panels)
-            parts = cmd_text.split(None, 1)
-            if len(parts) > 1:
-                pok["panels"] = int(parts[1])
+            if _pp_panels is not None:
+                pok["panels"] = max(1, min(9, _pp_panels))
             def _poproc(inp, out): popart.popart_image(inp, out, **pok)
             async for r in self._download_and_process(event, image_url, _poproc, "波普"):
                 yield r
@@ -310,17 +300,14 @@ class PicToolboxPlugin(Star):
         if cmd_text == "电子包浆" or (cmd_text.startswith("电子包浆 ") and cmd_text.split(None, 1)[1].isdigit()):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
             dk = dict(jpeg_quality=self._dp_jpeg,
                       banding_level=self._dp_banding,
-                      pixelate_size=self._dp_pixelate)
+                      pixelate_size=self._dp_pixelate,
+                      green_tint=self._dp_green)
             parts = cmd_text.split(None, 1)
             if len(parts) > 1:
                 intensity = int(parts[1])
@@ -328,6 +315,7 @@ class PicToolboxPlugin(Star):
                 dk["jpeg_quality"] = max(5, min(80, int(85 - intensity * 8)))
                 dk["banding_level"] = max(2, min(128, int(14 - intensity)))
                 dk["pixelate_size"] = max(0, min(20, intensity - 1))
+                dk["green_tint"] = min(100, intensity * 10)
             def _dproc(inp, out): digital_patina.digital_patina_image(inp, out, **dk)
             async for r in self._download_and_process(event, image_url, _dproc, "电子包浆"):
                 yield r
@@ -350,7 +338,7 @@ class PicToolboxPlugin(Star):
                     _fm_type = _fm_num_map.get(first, "bulge")
                     if len(parts) > 1:
                         try:
-                            _fm_strength = float(parts[1])
+                            _fm_strength = max(0.1, min(5.0, float(parts[1])))
                         except ValueError:
                             pass
                     _fm_match = True
@@ -358,18 +346,14 @@ class PicToolboxPlugin(Star):
                     _fm_type = _fm_alias[first]
                     if len(parts) > 1:
                         try:
-                            _fm_strength = float(parts[1])
+                            _fm_strength = max(0.1, min(5.0, float(parts[1])))
                         except ValueError:
                             pass
                     _fm_match = True
         if _fm_match:
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -385,11 +369,7 @@ class PicToolboxPlugin(Star):
 
         # ── 反色 ────────────────────────────
         if cmd_text == "反色":
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -402,11 +382,7 @@ class PicToolboxPlugin(Star):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
 
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -419,11 +395,7 @@ class PicToolboxPlugin(Star):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
 
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -435,11 +407,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "左对称":
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -451,11 +419,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "右对称":
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -467,11 +431,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "上对称":
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -483,11 +443,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "下对称":
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -501,7 +457,7 @@ class PicToolboxPlugin(Star):
         if _sym_m:
             _sym_n = int(_sym_m.group(1))
         elif cmd_text == "对称":
-            _sym_n = 2
+            _sym_n = 1
         else:
             m2 = re.match(r"^对称\s+(\d)$", cmd_text)
             if m2:
@@ -509,15 +465,11 @@ class PicToolboxPlugin(Star):
         if _sym_n is not None:
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
-            _sn = _sym_n
+            _sn = max(1, min(4, _sym_n))
             def _sym_proc(inp, out): mirror.mirror_by_type(inp, out, mirror_type=_sn)
             async for r in self._download_and_process(event, image_url, _sym_proc, f"对称{_sn}"):
                 yield r
@@ -537,11 +489,7 @@ class PicToolboxPlugin(Star):
         if _zs_n is not None and 1 <= _zs_n <= 4:
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -556,11 +504,7 @@ class PicToolboxPlugin(Star):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
 
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -572,11 +516,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "发射":
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -624,11 +564,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "马赛克" or cmd_text.startswith("马赛克 "):
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
 
@@ -687,11 +623,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "倒放":
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -703,11 +635,7 @@ class PicToolboxPlugin(Star):
         if cmd_text == "往返":
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -726,11 +654,7 @@ class PicToolboxPlugin(Star):
         if _be3d_match:
             if not self._match_mode and not actual_cmd.startswith("/"):
                 return
-            image_url = None
-            if at_qq and self._enable_at_avatar:
-                image_url = QQ_AVATAR_URL.format(qq=at_qq)
-            if not image_url:
-                image_url = self._extract_image_url(event)
+            image_url = self._resolve_image_url(event, at_qq)
             if not image_url:
                 return
             event.stop_event()
@@ -797,6 +721,17 @@ class PicToolboxPlugin(Star):
 
     @staticmethod
     def _extract_image_url(event: AstrMessageEvent) -> str | None:
+        """提取当前消息中的图片（不含引用链）。"""
+        for comp in event.get_messages():
+            if isinstance(comp, Comp.Image):
+                url = getattr(comp, "url", None) or getattr(comp, "file", None)
+                if url:
+                    return url
+        return None
+
+    @staticmethod
+    def _get_reply_image(event: AstrMessageEvent) -> str | None:
+        """仅从引用（回复）链中提取图片。"""
         for comp in event.get_messages():
             if isinstance(comp, Comp.Reply):
                 chain = getattr(comp, "chain", None) or []
@@ -805,11 +740,18 @@ class PicToolboxPlugin(Star):
                         url = getattr(rc, "url", None) or getattr(rc, "file", None)
                         if url:
                             return url
-        for comp in event.get_messages():
-            if isinstance(comp, Comp.Image):
-                url = getattr(comp, "url", None) or getattr(comp, "file", None)
-                if url:
-                    return url
+        return None
+
+    def _resolve_image_url(self, event: AstrMessageEvent, at_qq: str | None) -> str | None:
+        """按优先级获取图片源：引用图 > 当前消息内联图 > @用户头像"""
+        url = self._get_reply_image(event)
+        if url:
+            return url
+        url = self._extract_image_url(event)
+        if url:
+            return url
+        if at_qq and self._enable_at_avatar:
+            return QQ_AVATAR_URL.format(qq=at_qq)
         return None
 
     async def _download_and_process(self, event: AstrMessageEvent,

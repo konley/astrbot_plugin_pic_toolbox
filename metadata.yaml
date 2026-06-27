@@ -1,5 +1,5 @@
 name: pic_toolbox
-display_name: 图片处理工具箱
+display_name: 小K图片处理工具箱
 desc: 多功能图片/GIF处理插件：旋转/故障/万花筒/抖动/呼吸/包浆/波普/电子包浆/哈哈镜/裸眼3D/反色/翻转/对称/马赛克/调速/倒放/往返及表情包生成。全指令支持动图输入，紧凑参数语法，22+ 配置项可调。
 version: 2.0.0
 author: konley (forked from Lucy)
